@@ -246,7 +246,7 @@ private enum DeltaTab: Hashable { case dashboard, cache, avatar, hologram, exter
         case .cache: return "Cache"
         case .avatar: return "Avatar"
         case .hologram: return "Holograma"
-        case .external: return "External"
+        case .external: return "EXTERNAL"
         case .skin: return "Skin"
         case .settings: return "Configurações"
         case .custom(let identifier): return identifier
@@ -515,7 +515,7 @@ private struct DeltaDashboardView: View {
     var body: some View {
         ZStack(alignment: .top) {
             VStack(spacing: 0) {
-                DeltaHeader(showMenuButton: true, showKeyButton: selectedTab == .avatar || selectedTab == .hologram, isVietnamese: false, onMenu: { showQuickMenu = true }, onSwitchKey: { keySession.logout() })
+                DeltaHeader(showMenuButton: true, showKeyButton: selectedTab == .avatar || selectedTab == .hologram || selectedTab == .cache || selectedTab == .skin || selectedTab == .external, isVietnamese: false, onMenu: { showQuickMenu = true }, onSwitchKey: { keySession.logout() })
                     .padding(.horizontal, 16)
                     .padding(.top, 7)
 
@@ -527,7 +527,7 @@ private struct DeltaDashboardView: View {
                             case .cache: DeltaRemoteFeatureTab(feature: .cache, selectedGame: selectedGame)
                             case .avatar: DeltaRemoteFeatureTab(feature: .avatar, selectedGame: selectedGame)
                             case .hologram: DeltaRemoteFeatureTab(feature: .hologram, selectedGame: selectedGame)
-                            case .external: DeltaExternalPanelTab(selectedGame: selectedGame)
+                            case .external: DeltaRemoteFeatureTab(feature: .external, selectedGame: selectedGame)
                             case .skin: DeltaRemoteFeatureTab(feature: .skin, selectedGame: selectedGame)
                             case .settings: DeltaReferenceSettingsTab(languageCode: $languageCode, isVietnamese: isVietnamese, appState: appState, keySession: keySession)
                             case .custom(let identifier): DeltaRemoteCustomFeatureTab(identifier: identifier, selectedGame: selectedGame)
@@ -555,7 +555,7 @@ private struct DeltaDashboardView: View {
         .animation(.easeInOut(duration: 0.22), value: showErrorBanner)
         .sheet(isPresented: $showQuickMenu) {
             DeltaQuickMenu(selectedTab: $selectedTab, isVietnamese: isVietnamese)
-                .presentationDetents([.height(280)])
+                .presentationDetents([.height(440)])
                 .presentationDragIndicator(.visible)
                 .preferredColorScheme(.dark)
         }
@@ -648,6 +648,9 @@ private struct DeltaQuickMenu: View {
             VStack(spacing: 9) {
                 menuItem(.avatar, subtitle: "Patches de avatar")
                 menuItem(.hologram, subtitle: "Patches de holograma")
+                menuItem(.cache, subtitle: "Patches de cache")
+                menuItem(.skin, subtitle: "Patches de skin")
+                menuItem(.external, subtitle: "Patches EXTERNAL")
             }
         }
         .padding(22)
@@ -688,7 +691,7 @@ private struct DeltaTabBar: View {
     @Binding var selectedGame: DeltaGame
     let isVietnamese: Bool
 
-    private var patchTabs: [DeltaTab] { [.avatar, .hologram] }
+    private var patchTabs: [DeltaTab] { [.avatar, .hologram, .cache, .skin, .external] }
 
     private func tab(for identifier: String) -> DeltaTab {
         switch identifier.lowercased() {
