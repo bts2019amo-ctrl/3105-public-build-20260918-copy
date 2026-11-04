@@ -40,7 +40,7 @@ enum AppAccentPalette: String, CaseIterable, Identifiable {
         case .crimson: return Color(red: 0.72, green: 0.08, blue: 0.24)
         case .sky: return Color(red: 0.22, green: 0.62, blue: 0.96)
         case .magenta: return Color(red: 0.78, green: 0.16, blue: 0.72)
-        case .slate: return Color(red: 0.36, green: 0.43, blue: 0.55)
+        case .slate: return Color(red: 0.55, green: 0.57, blue: 0.59)
         }
     }
 }
@@ -51,19 +51,19 @@ enum AppTheme {
     static let wallpaperBlurStorageKey = "theme.wallpaper.blur"
     static let animationSpeedStorageKey = "theme.animation.speed"
     static let saturationStorageKey = "theme.saturation"
-    static let defaultAccentPalette = AppAccentPalette.cyan.rawValue
+    static let defaultAccentPalette = AppAccentPalette.slate.rawValue
     static let defaultGlassOpacity = 0.14
     static let defaultWallpaperBlur = 26.0
     static let defaultAnimationSpeed = 1.0
     static let defaultSaturation = 1.0
 
-    static var accent: Color { Color(red: 0.20, green: 0.70, blue: 0.82) }
+    static var accent: Color { Color(red: 0.70, green: 0.72, blue: 0.74) }
     static var glassOpacity: Double { UserDefaults.standard.object(forKey: glassOpacityStorageKey) as? Double ?? defaultGlassOpacity }
     static var wallpaperBlur: CGFloat { CGFloat(UserDefaults.standard.object(forKey: wallpaperBlurStorageKey) as? Double ?? defaultWallpaperBlur) }
     static var animationSpeed: Double { UserDefaults.standard.object(forKey: animationSpeedStorageKey) as? Double ?? defaultAnimationSpeed }
     static var saturation: Double { UserDefaults.standard.object(forKey: saturationStorageKey) as? Double ?? defaultSaturation }
     static let pageBackground = Color.black
-    static let consoleBackground = Color(red: 0.075, green: 0.075, blue: 0.09)
+    static let consoleBackground = Color(red: 0.075, green: 0.075, blue: 0.075)
     static let pageInset: CGFloat = 16
     static let rowIconSize: CGFloat = 17
     static let rowIconFrame: CGFloat = 28
@@ -99,7 +99,7 @@ struct LiquidGlassCardModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(Color(red: 0.075, green: 0.07, blue: 0.095).opacity(0.82), in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .background(Color(red: 0.075, green: 0.075, blue: 0.075).opacity(0.82), in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .background(tint.opacity(opacity * 0.34), in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -135,43 +135,6 @@ extension View {
     }
 }
 
-struct ExternalSystemLaunchView: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var glow = false
-
-    var body: some View {
-        ZStack {
-            AnimatedGlassWallpaper()
-            VStack(spacing: 18) {
-                AppLogo(size: 92)
-                    .scaleEffect(glow ? 1.04 : 0.94)
-                    .shadow(color: AppTheme.accent.opacity(0.65), radius: glow ? 28 : 12)
-                VStack(spacing: 5) {
-                    Text("EXTERNAL SYSTEM")
-                        .font(.system(size: 20, weight: .black, design: .rounded))
-                        .tracking(2.2)
-                    Text("PATCH CONTROL")
-                        .font(.caption.weight(.bold))
-                        .tracking(2.8)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(36)
-            .liquidGlassCard(cornerRadius: 34, tint: AppTheme.accent, opacity: 0.12)
-            .padding(28)
-        }
-        .ignoresSafeArea()
-        .onAppear {
-            guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 1.15).repeatForever(autoreverses: true)) {
-                glow = true
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("External System")
-    }
-}
-
 /// A low-cost, decorative constellation field used behind app surfaces.
 /// Motion is deliberately slow and automatically becomes static when Reduce Motion is enabled.
 struct ParticleFieldBackground: View {
@@ -181,7 +144,7 @@ struct ParticleFieldBackground: View {
         GeometryReader { _ in
             ZStack {
                 LinearGradient(
-                    colors: [Color(red: 0.018, green: 0.021, blue: 0.026), Color(red: 0.032, green: 0.040, blue: 0.048), .black],
+                    colors: [Color(red: 0.018, green: 0.018, blue: 0.018), Color(red: 0.032, green: 0.032, blue: 0.032), .black],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -233,14 +196,14 @@ struct ParticleFieldBackground: View {
                 path.move(to: a)
                 path.addLine(to: b)
                 let opacity = Double(0.11 * (1 - distance / maxDistance))
-                context.stroke(path, with: .color(Color(red: 0.18, green: 0.68, blue: 0.78).opacity(opacity)), lineWidth: 0.55)
+                context.stroke(path, with: .color(Color(red: 0.62, green: 0.64, blue: 0.66).opacity(opacity)), lineWidth: 0.55)
             }
         }
 
         for (index, point) in points.enumerated() {
             let radius: CGFloat = index.isMultiple(of: 5) ? 2.1 : 1.25
             let dot = Path(ellipseIn: CGRect(x: point.x - radius, y: point.y - radius, width: radius * 2, height: radius * 2))
-            context.fill(dot, with: .color(Color(red: 0.35, green: 0.76, blue: 0.84).opacity(index.isMultiple(of: 4) ? 0.48 : 0.24)))
+            context.fill(dot, with: .color(Color(red: 0.72, green: 0.74, blue: 0.76).opacity(index.isMultiple(of: 4) ? 0.42 : 0.20)))
         }
     }
 }
@@ -264,9 +227,9 @@ struct ParallaxBrandHeader: View {
                         .offset(x: sin(phase * 0.45) * 0.5)
                 }
                 Circle()
-                    .fill(Color.green)
+                    .fill(Color.white.opacity(0.72))
                     .frame(width: 6, height: 6)
-                    .shadow(color: .green.opacity(0.7), radius: 4)
+                    .shadow(color: .white.opacity(0.45), radius: 4)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
@@ -287,7 +250,7 @@ struct AnimatedGlassWallpaper: View {
                 LinearGradient(
                     colors: [
                         Color.black,
-                        Color(red: 0.055, green: 0.055, blue: 0.065),
+                        Color(red: 0.055, green: 0.055, blue: 0.055),
                         Color.black
                     ],
                     startPoint: .topLeading,

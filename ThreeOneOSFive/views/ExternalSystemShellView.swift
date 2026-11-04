@@ -11,7 +11,7 @@ struct ScaleButtonStyle: ButtonStyle {
     }
 }
 struct DeltaCardShadow: ViewModifier {
-    var color: Color = DeltaColors.purple
+    var color: Color = DeltaColors.accent
     func body(content: Content) -> some View {
         content
             .shadow(color: color.opacity(0.14), radius: 12, y: 4)
@@ -19,7 +19,7 @@ struct DeltaCardShadow: ViewModifier {
     }
 }
 extension View {
-    func deltaCardShadow(_ color: Color = DeltaColors.purple) -> some View {
+    func deltaCardShadow(_ color: Color = DeltaColors.accent) -> some View {
         modifier(DeltaCardShadow(color: color))
     }
 }
@@ -34,7 +34,7 @@ struct ExternalSystemShellView: View {
 
     @State private var route: DeltaRoute = .selector
     @State private var selectedGame: DeltaGame = .freeFire
-    @State private var selectedTab: DeltaTab = .dashboard
+    @State private var selectedTab: DeltaTab = .avatar
     @State private var showErrorBanner = false
     @AppStorage("externalSystem.streamProofEnabled") private var streamProofEnabled = false
     @AppStorage(DeltaColors.themeKey) private var themeRaw = DeltaTheme.graphite.rawValue
@@ -56,7 +56,10 @@ struct ExternalSystemShellView: View {
             case .selector:
                 DeltaGameSelectorView(
                     selectedGame: $selectedGame,
-                    onEnter: { withAnimation(motion) { route = .dashboard } }
+                    onEnter: {
+                        selectedTab = .avatar
+                        withAnimation(motion) { route = .dashboard }
+                    }
                 )
                 .transition(.opacity.combined(with: .scale(scale: 0.985)))
             case .dashboard:
@@ -70,7 +73,7 @@ struct ExternalSystemShellView: View {
                     keySession: keySession,
                     onBackToGameSelection: {
                         withAnimation(motion) {
-                            selectedTab = .dashboard
+                            selectedTab = .avatar
                             route = .selector
                         }
                     }
@@ -87,11 +90,11 @@ struct ExternalSystemShellView: View {
                         VStack(spacing: 16) {
                             ZStack {
                                 Circle()
-                                    .fill(DeltaColors.purple.opacity(0.18))
+                                    .fill(DeltaColors.accent.opacity(0.18))
                                     .frame(width: 72, height: 72)
                                 Image(systemName: "wrench.and.screwdriver.fill")
                                     .font(.system(size: 30, weight: .bold))
-                                    .foregroundStyle(DeltaColors.purple)
+                                    .foregroundStyle(DeltaColors.accent)
                             }
                             Text(remoteConfig.config.maintenance.title.isEmpty ? "Em manutencao" : remoteConfig.config.maintenance.title)
                                 .font(.title2.weight(.bold))
@@ -203,13 +206,13 @@ private struct DeltaColorWheel: View {
                         VStack(spacing: 3) {
                             Image(systemName: "wand.and.stars")
                                 .font(.system(size: 22, weight: .bold))
-                                .foregroundStyle(DeltaColors.purple)
+                                .foregroundStyle(DeltaColors.accent)
                             Text("COLOR")
                                 .font(.system(size: 9, weight: .black, design: .rounded))
                                 .foregroundStyle(DeltaColors.muted)
                         }
                     }
-                    .shadow(color: DeltaColors.purple.opacity(0.22), radius: 15)
+                    .shadow(color: DeltaColors.accent.opacity(0.22), radius: 15)
                 Circle()
                     .fill(Color(hue: selectedHue, saturation: 0.94, brightness: 1.0))
                     .frame(width: side * 0.095, height: side * 0.095)
@@ -348,15 +351,15 @@ enum DeltaColors {
     static let darkModeKey = "externalSystem.darkMode"
     static let customHueKey = "externalSystem.customHue"
     private static let palette = DeltaPalette(
-        primary: Color(red: 0.20, green: 0.70, blue: 0.82),
-        dark: Color(red: 0.10, green: 0.34, blue: 0.42),
-        page: Color(red: 0.018, green: 0.021, blue: 0.026),
+        primary: Color(red: 0.72, green: 0.74, blue: 0.76),
+        dark: Color(red: 0.24, green: 0.25, blue: 0.27),
+        page: Color(red: 0.018, green: 0.018, blue: 0.018),
         ink: Color.white.opacity(0.96),
-        muted: Color(red: 0.62, green: 0.66, blue: 0.70),
-        card: Color(red: 0.065, green: 0.074, blue: 0.086).opacity(0.98),
-        line: Color.white.opacity(0.11)
+        muted: Color(red: 0.62, green: 0.64, blue: 0.66),
+        card: Color(red: 0.065, green: 0.065, blue: 0.065).opacity(0.98),
+        line: Color.white.opacity(0.13)
     )
-    static var purple: Color { palette.primary }
+    static var accent: Color { palette.primary }
     static var purpleDark: Color { palette.dark }
     static var lavender: Color { palette.page }
     static var page: Color { palette.page }
@@ -387,7 +390,7 @@ private struct DeltaGameSelectorView: View {
                         Text("SELECIONE SEU JOGO")
                             .font(.system(size: 11, weight: .heavy, design: .rounded))
                             .tracking(1.6)
-                            .foregroundStyle(DeltaColors.purple)
+                            .foregroundStyle(DeltaColors.accent)
                         Text("Escolha a versão instalada")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .tracking(-0.4)
@@ -405,7 +408,7 @@ private struct DeltaGameSelectorView: View {
                                 Text("VERSÃO DO JOGO")
                                     .font(.system(size: 10, weight: .heavy, design: .rounded))
                                     .tracking(1.2)
-                                    .foregroundStyle(DeltaColors.purple)
+                                    .foregroundStyle(DeltaColors.accent)
                                 Text("Selecione uma opção")
                                     .font(.caption)
                                     .foregroundStyle(DeltaColors.muted)
@@ -413,9 +416,9 @@ private struct DeltaGameSelectorView: View {
                             Spacer()
                             Image(systemName: "gamecontroller.fill")
                                 .font(.system(size: 17, weight: .semibold))
-                                .foregroundStyle(DeltaColors.purple)
+                                .foregroundStyle(DeltaColors.accent)
                                 .frame(width: 38, height: 38)
-                                .background(DeltaColors.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .background(DeltaColors.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                         .padding(.bottom, 3)
 
@@ -446,8 +449,8 @@ private struct DeltaGameSelectorView: View {
                         }
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity, minHeight: 54)
-                        .background(LinearGradient(colors: [DeltaColors.purpleDark, DeltaColors.purple], startPoint: .leading, endPoint: .trailing), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
-                        .shadow(color: DeltaColors.purple.opacity(0.24), radius: 16, y: 7)
+                        .background(LinearGradient(colors: [DeltaColors.purpleDark, DeltaColors.accent], startPoint: .leading, endPoint: .trailing), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+                        .shadow(color: DeltaColors.accent.opacity(0.24), radius: 16, y: 7)
                     }
                     .buttonStyle(.plain)
                     .scaleEffect(pressed ? 0.96 : 1)
@@ -484,14 +487,14 @@ private struct DeltaGameRow: View {
                 }
                 Spacer()
                 ZStack {
-                    Circle().stroke(selected ? DeltaColors.purple : Color.white.opacity(0.28), lineWidth: 1.5).frame(width: 21, height: 21)
-                    if selected { Circle().fill(DeltaColors.purple).frame(width: 11, height: 11) }
+                    Circle().stroke(selected ? DeltaColors.accent : Color.white.opacity(0.28), lineWidth: 1.5).frame(width: 21, height: 21)
+                    if selected { Circle().fill(DeltaColors.accent).frame(width: 11, height: 11) }
                 }
             }
             .padding(.horizontal, 13)
             .frame(minHeight: 74)
-            .background(selected ? DeltaColors.purple.opacity(0.17) : Color.white.opacity(0.025), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(selected ? DeltaColors.purple.opacity(0.70) : DeltaColors.line, lineWidth: selected ? 1.3 : 1))
+            .background(selected ? DeltaColors.accent.opacity(0.17) : Color.white.opacity(0.025), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(selected ? DeltaColors.accent.opacity(0.70) : DeltaColors.line, lineWidth: selected ? 1.3 : 1))
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -518,25 +521,9 @@ private struct DeltaDashboardView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
-                        if selectedTab != .dashboard {
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.22)) { selectedTab = .dashboard }
-                            } label: {
-                                HStack(spacing: 7) {
-                                    Image(systemName: "arrow.left")
-                                    Text("TODAS AS CATEGORIAS")
-                                }
-                                .font(.system(size: 10, weight: .bold, design: .rounded))
-                                .tracking(0.7)
-                                .foregroundStyle(DeltaColors.muted)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                        }
                         Group {
                             switch selectedTab {
-                            case .dashboard: DeltaTabBar(selectedTab: $selectedTab, selectedGame: $selectedGame, isVietnamese: isVietnamese)
+                            case .dashboard: DeltaRemoteFeatureTab(feature: .avatar, selectedGame: selectedGame)
                             case .cache: DeltaRemoteFeatureTab(feature: .cache, selectedGame: selectedGame)
                             case .avatar: DeltaRemoteFeatureTab(feature: .avatar, selectedGame: selectedGame)
                             case .hologram: DeltaRemoteFeatureTab(feature: .hologram, selectedGame: selectedGame)
@@ -585,7 +572,7 @@ private struct DeltaHeader: View {
 
     var body: some View {
         ZStack {
-            Text("PROXY IOS")
+            Text("EXTERNAL SYSTEM")
                 .font(.headline.weight(.black))
                 .tracking(2.0)
                 .foregroundStyle(DeltaColors.ink)
@@ -619,11 +606,11 @@ private struct DeltaHeader: View {
                                 .tracking(0.35)
                                 .lineLimit(1)
                         }
-                            .foregroundStyle(DeltaColors.purple)
+                            .foregroundStyle(DeltaColors.accent)
                             .padding(.horizontal, 10)
                             .frame(height: 42)
-                            .background(DeltaColors.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(DeltaColors.purple.opacity(0.28), lineWidth: 1))
+                            .background(DeltaColors.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(DeltaColors.accent.opacity(0.28), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Trocar key")
@@ -653,7 +640,7 @@ private struct DeltaQuickMenu: View {
                 Text("NAVEGAÇÃO RÁPIDA")
                     .font(.system(size: 10, weight: .heavy, design: .rounded))
                     .tracking(1.5)
-                    .foregroundStyle(DeltaColors.purple)
+                    .foregroundStyle(DeltaColors.accent)
                 Text("Escolha uma categoria")
                     .font(.system(.title3, design: .rounded).weight(.bold))
                     .foregroundStyle(DeltaColors.ink)
@@ -785,8 +772,8 @@ private struct DeltaTabBar: View {
             .foregroundStyle(active ? .white : DeltaColors.muted)
             .frame(maxWidth: .infinity, minHeight: 48)
             .padding(.horizontal, 8)
-            .background(active ? DeltaColors.purple.opacity(0.68) : Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(active ? DeltaColors.purple.opacity(0.8) : DeltaColors.line, lineWidth: 1))
+            .background(active ? DeltaColors.accent.opacity(0.68) : Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(active ? DeltaColors.accent.opacity(0.8) : DeltaColors.line, lineWidth: 1))
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(active ? .isSelected : [])
@@ -798,7 +785,7 @@ private struct DeltaTabBar: View {
                 Text("CENTRAL DE PATCHES")
                     .font(.system(size: 10, weight: .heavy, design: .rounded))
                     .tracking(1.5)
-                    .foregroundStyle(DeltaColors.purple)
+                    .foregroundStyle(DeltaColors.accent)
                 Text("O que vamos carregar?")
                     .font(.title2.weight(.bold))
                     .tracking(-0.4)
@@ -818,7 +805,7 @@ private struct DeltaTabBar: View {
                         .tracking(1.1)
                         .foregroundStyle(DeltaColors.muted)
                     Spacer()
-                    Image(systemName: "gamecontroller.fill").font(.caption).foregroundStyle(DeltaColors.purple)
+                    Image(systemName: "gamecontroller.fill").font(.caption).foregroundStyle(DeltaColors.accent)
                 }
                 HStack(spacing: 8) {
                     gameChoice(.freeFire)
@@ -834,7 +821,7 @@ private struct DeltaTabBar: View {
                     Text("CATEGORIAS")
                         .font(.system(size: 10, weight: .heavy, design: .rounded))
                         .tracking(1.25)
-                        .foregroundStyle(DeltaColors.purple)
+                        .foregroundStyle(DeltaColors.accent)
                     Spacer()
                     Text("\(patchStore.items.filter { PatchProjectLibrary.category(for: $0) == selectedCategory }.count) PATCHES")
                         .font(.system(size: 9, weight: .bold, design: .rounded))
@@ -877,10 +864,10 @@ private struct DeltaCompactTabButton: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .bold))
             }
-            .foregroundStyle(selectedTab == tab ? DeltaColors.purple : DeltaColors.muted)
+            .foregroundStyle(selectedTab == tab ? DeltaColors.accent : DeltaColors.muted)
             .padding(.horizontal, 12)
             .frame(height: 34)
-            .background(selectedTab == tab ? DeltaColors.purple.opacity(0.16) : DeltaColors.card, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+            .background(selectedTab == tab ? DeltaColors.accent.opacity(0.16) : DeltaColors.card, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -899,9 +886,9 @@ private struct DeltaCategoryCard: View {
                 HStack {
                     Image(systemName: tab.icon)
                         .font(.system(size: tab == .skin ? 21 : 17, weight: .semibold))
-                        .foregroundStyle(isSelected ? .white : DeltaColors.purple)
+                        .foregroundStyle(isSelected ? .white : DeltaColors.accent)
                         .frame(width: 39, height: 39)
-                        .background(isSelected ? Color.white.opacity(0.16) : DeltaColors.purple.opacity(0.11), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .background(isSelected ? Color.white.opacity(0.16) : DeltaColors.accent.opacity(0.11), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     Spacer()
                     Image(systemName: isSelected ? "checkmark.circle.fill" : "arrow.up.right")
                         .font(.system(size: 11, weight: .bold))
@@ -921,15 +908,15 @@ private struct DeltaCategoryCard: View {
             .frame(maxWidth: .infinity, minHeight: 94, alignment: .leading)
             .background(
                 isSelected
-                    ? AnyShapeStyle(LinearGradient(colors: [DeltaColors.purpleDark.opacity(0.94), DeltaColors.purple.opacity(0.78)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    ? AnyShapeStyle(LinearGradient(colors: [DeltaColors.purpleDark.opacity(0.94), DeltaColors.accent.opacity(0.78)], startPoint: .topLeading, endPoint: .bottomTrailing))
                     : AnyShapeStyle(DeltaColors.card),
                 in: RoundedRectangle(cornerRadius: 18, style: .continuous)
             )
             .overlay {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(isSelected ? DeltaColors.purple.opacity(0.54) : DeltaColors.line, lineWidth: 1)
+                    .stroke(isSelected ? DeltaColors.accent.opacity(0.54) : DeltaColors.line, lineWidth: 1)
             }
-            .shadow(color: isSelected ? DeltaColors.purple.opacity(0.22) : .black.opacity(0.12), radius: 10, y: 4)
+            .shadow(color: isSelected ? DeltaColors.accent.opacity(0.22) : .black.opacity(0.12), radius: 10, y: 4)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -984,7 +971,7 @@ private struct DeltaHomeTab: View {
                     } label: {
                         Image(systemName: patchStore.remoteSyncState == .syncing ? "arrow.triangle.2.circlepath" : "arrow.clockwise")
                             .font(.caption.weight(.bold))
-                            .foregroundStyle(DeltaColors.purple)
+                            .foregroundStyle(DeltaColors.accent)
                             .rotationEffect(.degrees(patchStore.remoteSyncState == .syncing ? 180 : 0))
                     }
                     .buttonStyle(.plain)
@@ -992,7 +979,7 @@ private struct DeltaHomeTab: View {
 
                 HStack(spacing: 7) {
                     Circle()
-                        .fill(patchStore.remoteSyncState == .online ? Color.green : patchStore.remoteSyncState == .syncing ? Color.orange : Color.gray)
+                        .fill(patchStore.remoteSyncState == .online ? Color.white.opacity(0.72) : patchStore.remoteSyncState == .syncing ? Color.white.opacity(0.38) : Color.gray.opacity(0.65))
                         .frame(width: 7, height: 7)
                     Text(remoteStatusTitle)
                         .font(.caption2.weight(.semibold))
@@ -1000,7 +987,7 @@ private struct DeltaHomeTab: View {
                     Spacer()
                     Text("\(remoteItems.count) patches")
                         .font(.caption2.weight(.bold))
-                        .foregroundStyle(DeltaColors.purple)
+                        .foregroundStyle(DeltaColors.accent)
                 }
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 7) {
@@ -1029,14 +1016,14 @@ private struct DeltaHomeTab: View {
             Image(systemName: icon)
                 .font(.system(size: emphasized ? 22 : 16, weight: .semibold))
                 .frame(width: emphasized ? 34 : 24, height: emphasized ? 28 : 22)
-                .foregroundStyle(DeltaColors.purple)
+                .foregroundStyle(DeltaColors.accent)
             Text(title)
                 .font(.system(size: 8, weight: .semibold))
                 .foregroundStyle(DeltaColors.ink)
                 .lineLimit(1)
             Text("\(count)")
                 .font(.system(size: 10, weight: .black, design: .rounded))
-                .foregroundStyle(DeltaColors.purple)
+                .foregroundStyle(DeltaColors.accent)
         }
         .frame(maxWidth: .infinity, minHeight: emphasized ? 62 : 54)
         .background(DeltaColors.card, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -1130,9 +1117,9 @@ private struct DeltaRemoteFeatureTab: View {
                     if feature == .skin {
                         Image(systemName: icon)
                             .font(.system(size: 28, weight: .bold))
-                            .foregroundStyle(DeltaColors.purple)
+                            .foregroundStyle(DeltaColors.accent)
                             .frame(width: 42, height: 42)
-                            .background(DeltaColors.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .background(DeltaColors.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         Text(title)
                             .font(.system(size: 13, weight: .black, design: .rounded))
                             .foregroundStyle(DeltaColors.ink)
@@ -1142,7 +1129,7 @@ private struct DeltaRemoteFeatureTab: View {
                     Spacer()
                     Text("\(items.count) REMOTOS")
                         .font(.system(size: 8, weight: .black))
-                        .foregroundStyle(DeltaColors.purple)
+                        .foregroundStyle(DeltaColors.accent)
                 }
                 Text("Toque em um patch para ver os controles. Você pode ativá-lo ou restaurar o original.")
                     .font(.caption)
@@ -1155,7 +1142,7 @@ private struct DeltaRemoteFeatureTab: View {
                     VStack(spacing: 10) {
                         Image(systemName: "shippingbox")
                             .font(.system(size: 28, weight: .light))
-                            .foregroundStyle(DeltaColors.purple)
+                            .foregroundStyle(DeltaColors.accent)
                         Text(patchStore.remoteSyncState == .syncing ? "Sincronizando patches remotos..." : "Nenhum patch nesta categoria ainda")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(DeltaColors.ink)
@@ -1181,17 +1168,17 @@ private struct DeltaRemoteFeatureTab: View {
                                 if let iconURL = PatchProjectLibrary.remoteIconURL(for: item.id) {
                                     AsyncImage(url: iconURL) { phase in
                                         if let image = phase.image { image.resizable().scaledToFit().padding(7) }
-                                        else { Image(systemName: icon).resizable().scaledToFit().padding(15).foregroundStyle(DeltaColors.purple) }
+                                        else { Image(systemName: icon).resizable().scaledToFit().padding(15).foregroundStyle(DeltaColors.accent) }
                                     }
                                     .frame(width: 78, height: 78)
-                                    .background(DeltaColors.purple.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                    .background(DeltaColors.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                                 } else {
                                     Image(systemName: icon)
                                         .font(.title3)
-                                        .foregroundStyle(DeltaColors.purple)
+                                        .foregroundStyle(DeltaColors.accent)
                                         .frame(width: 42, height: 42)
-                                        .background(DeltaColors.purple.opacity(0.10), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                                        .background(DeltaColors.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                                 }
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(PatchProjectLibrary.displayName(for: item).isEmpty ? (item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent) : PatchProjectLibrary.displayName(for: item))
@@ -1204,13 +1191,13 @@ private struct DeltaRemoteFeatureTab: View {
                                 }
                                 Spacer()
                                 Image(systemName: expandedItemID == item.id ? "chevron.up.circle.fill" : "chevron.down.circle")
-                                    .foregroundStyle(DeltaColors.purple)
+                                    .foregroundStyle(DeltaColors.accent)
                             }
                         }
                         .buttonStyle(.plain)
 
                         if expandedItemID == item.id {
-                            Divider().overlay(DeltaColors.purple.opacity(0.12))
+                            Divider().overlay(DeltaColors.accent.opacity(0.12))
                             if item.isLocked {
                                 Button {
                                     patchStore.requestUnlock(for: item)
@@ -1219,46 +1206,66 @@ private struct DeltaRemoteFeatureTab: View {
                                         .font(.system(size: 11, weight: .black))
                                         .foregroundStyle(.white)
                                         .frame(maxWidth: .infinity, minHeight: 40)
-                                        .background(DeltaColors.purple, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                        .background(DeltaColors.accent, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                                 }
                                 .buttonStyle(.plain)
                                 .disabled(patchStore.isBusy)
                             } else {
-                                HStack(spacing: 12) {
+                                HStack(spacing: 10) {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(applied ? (feature == .external ? "Em execução" : "Aplicado") : "Desativado")
                                             .font(.caption.weight(.semibold))
                                             .foregroundStyle(DeltaColors.ink)
+                                            .lineLimit(1)
                                         Text(applied
                                               ? (feature == .external ? "Desative para limpar os dados" : "Desative para restaurar o original")
                                               : (feature == .external ? "Ative para iniciar" : "Ative para aplicar o patch"))
                                             .font(.caption2)
                                             .foregroundStyle(DeltaColors.muted)
+                                            .lineLimit(2)
+                                            .fixedSize(horizontal: false, vertical: true)
                                     }
-                                    Spacer()
-                                    Toggle("", isOn: Binding(
-                                        get: { applied },
-                                        set: { on in
-                                            if on { patchStore.applyInline(item) }
-                                            else { patchStore.restoreInline(item) }
+                                    Spacer(minLength: 4)
+                                    HStack(spacing: 9) {
+                                        if patchStore.isBusy {
+                                            ProgressView()
+                                                .scaleEffect(0.78)
+                                                .tint(DeltaColors.accent)
+                                                .accessibilityLabel("Aplicando patch")
                                         }
-                                    ))
-                                    .labelsHidden()
-                                    .toggleStyle(DeltaToggleStyle())
-                                    .disabled(patchStore.isBusy)
-                                    Button {
-                                        patchStore.restoreInline(item)
-                                    } label: {
-                                        Label("Restaurar", systemImage: "arrow.counterclockwise")
-                                            .font(.system(size: 11, weight: .bold))
-                                            .foregroundStyle(DeltaColors.purple)
-                                            .padding(.horizontal, 10)
-                                            .frame(height: 36)
-                                            .background(DeltaColors.purple.opacity(0.10), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                                            .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(DeltaColors.purple.opacity(0.24), lineWidth: 1))
+                                        Button {
+                                            if applied {
+                                                patchStore.restoreInline(item)
+                                            } else {
+                                                patchStore.applyInline(item)
+                                            }
+                                        } label: {
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(applied ? DeltaColors.accent : Color.gray.opacity(0.45))
+                                                .frame(width: 37, height: 23)
+                                                .overlay(alignment: applied ? .trailing : .leading) {
+                                                    Circle().fill(.white).frame(width: 18, height: 18).padding(2)
+                                                }
+                                                .animation(.spring(response: 0.24, dampingFraction: 0.8), value: applied)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .disabled(patchStore.isBusy)
+                                        .accessibilityLabel(applied ? "Desativar patch" : "Ativar patch")
+                                        .accessibilityValue(applied ? "Ativo" : "Desativado")
+                                        Button {
+                                            patchStore.restoreInline(item)
+                                        } label: {
+                                            Label("Restaurar", systemImage: "arrow.counterclockwise")
+                                                .font(.system(size: 11, weight: .bold))
+                                                .foregroundStyle(DeltaColors.accent)
+                                                .padding(.horizontal, 10)
+                                                .frame(height: 36)
+                                                .background(DeltaColors.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                                                .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(DeltaColors.accent.opacity(0.24), lineWidth: 1))
+                                        }
+                                        .buttonStyle(.plain)
+                                        .disabled(!applied || patchStore.isBusy)
                                     }
-                                    .buttonStyle(.plain)
-                                    .disabled(!applied || patchStore.isBusy)
                                 }
                                 .padding(.vertical, 4)
                             }
@@ -1302,7 +1309,7 @@ private struct DeltaRemoteCustomFeatureTab: View {
             if items.isEmpty {
                 DeltaCard {
                     VStack(spacing: 10) {
-                        Image(systemName: icon).font(.system(size: 28, weight: .light)).foregroundStyle(DeltaColors.purple)
+                        Image(systemName: icon).font(.system(size: 28, weight: .light)).foregroundStyle(DeltaColors.accent)
                         Text("Nenhum patch nesta categoria ainda").font(.subheadline.weight(.semibold)).foregroundStyle(DeltaColors.ink)
                     }.frame(maxWidth: .infinity).padding(.vertical, 22)
                 }
@@ -1317,28 +1324,28 @@ private struct DeltaRemoteCustomFeatureTab: View {
                                 if let iconURL = PatchProjectLibrary.remoteIconURL(for: item.id) {
                                     AsyncImage(url: iconURL) { phase in
                                         if let image = phase.image { image.resizable().scaledToFit().padding(7) }
-                                        else { Image(systemName: icon).resizable().scaledToFit().padding(15).foregroundStyle(DeltaColors.purple) }
-                                    }.frame(width: 58, height: 58).background(DeltaColors.purple.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous)).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                        else { Image(systemName: icon).resizable().scaledToFit().padding(15).foregroundStyle(DeltaColors.accent) }
+                                    }.frame(width: 58, height: 58).background(DeltaColors.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous)).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                                 } else {
-                                    Image(systemName: icon).font(.title3).foregroundStyle(DeltaColors.purple).frame(width: 42, height: 42).background(DeltaColors.purple.opacity(0.10), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                                    Image(systemName: icon).font(.title3).foregroundStyle(DeltaColors.accent).frame(width: 42, height: 42).background(DeltaColors.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                                 }
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(PatchProjectLibrary.displayName(for: item)).font(.subheadline.weight(.bold)).foregroundStyle(DeltaColors.ink).lineLimit(1)
                                     Text(applied ? "Aplicado — toque para restaurar" : item.isLocked ? "Protegido — toque para desbloquear" : "Toque para configurar").font(.caption2).foregroundStyle(DeltaColors.muted)
                                 }
                                 Spacer()
-                                Image(systemName: expandedItemID == item.id ? "chevron.up.circle.fill" : "chevron.down.circle").foregroundStyle(DeltaColors.purple)
+                                Image(systemName: expandedItemID == item.id ? "chevron.up.circle.fill" : "chevron.down.circle").foregroundStyle(DeltaColors.accent)
                             }
                         }.buttonStyle(.plain)
                         if expandedItemID == item.id {
-                            Divider().overlay(DeltaColors.purple.opacity(0.12))
+                            Divider().overlay(DeltaColors.accent.opacity(0.12))
                             if item.isLocked {
                                 Button { patchStore.requestUnlock(for: item) } label: {
                                     Label("DESBLOQUEAR PATCH", systemImage: "lock.open.fill")
                                         .font(.system(size: 11, weight: .black))
                                         .foregroundStyle(.white)
                                         .frame(maxWidth: .infinity, minHeight: 40)
-                                        .background(DeltaColors.purple, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                        .background(DeltaColors.accent, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                                 }
                                 .buttonStyle(.plain)
                                 .disabled(patchStore.isBusy)
@@ -1368,11 +1375,11 @@ private struct DeltaRemoteCustomFeatureTab: View {
                                     } label: {
                                         Label("Restaurar", systemImage: "arrow.counterclockwise")
                                             .font(.system(size: 11, weight: .bold))
-                                            .foregroundStyle(DeltaColors.purple)
+                                            .foregroundStyle(DeltaColors.accent)
                                             .padding(.horizontal, 10)
                                             .frame(height: 36)
-                                            .background(DeltaColors.purple.opacity(0.10), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                                            .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(DeltaColors.purple.opacity(0.24), lineWidth: 1))
+                                            .background(DeltaColors.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                                            .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(DeltaColors.accent.opacity(0.24), lineWidth: 1))
                                     }
                                     .buttonStyle(.plain)
                                     .disabled(!applied || patchStore.isBusy)
@@ -1519,7 +1526,7 @@ private struct DeltaReferenceSettingsTab: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { withAnimation { copied = false } }
                     } label: {
                         Text(copied ? "â" : (isVietnamese ? "Sao chÃ©p" : "Copy"))
-                            .font(.caption.weight(.bold)).foregroundStyle(.white).padding(.horizontal, 10).padding(.vertical, 5).background(DeltaColors.purple, in: Capsule())
+                            .font(.caption.weight(.bold)).foregroundStyle(.white).padding(.horizontal, 10).padding(.vertical, 5).background(DeltaColors.accent, in: Capsule())
                     }.buttonStyle(.plain)
                 }
                 Text(deviceUID).font(.system(size: 8, design: .monospaced)).foregroundStyle(DeltaColors.ink).lineLimit(1).minimumScaleFactor(0.6)
@@ -1567,12 +1574,22 @@ private struct DeltaSectionTitle: View {
     let title: String
     let icon: String
     init(_ title: String, icon: String) { self.title = title; self.icon = icon }
-    var body: some View { Label(title, systemImage: icon).font(.system(size: 9, weight: .black)).tracking(0.7).foregroundStyle(DeltaColors.purple).shadow(color: DeltaColors.purple.opacity(0.85), radius: 7) }
+    var body: some View { Label(title, systemImage: icon).font(.system(size: 9, weight: .black)).tracking(0.7).foregroundStyle(DeltaColors.accent).shadow(color: DeltaColors.accent.opacity(0.85), radius: 7) }
 }
 
 private struct DeltaStatusBadge: View {
     let text: String
-    var body: some View { HStack(spacing: 4) { Circle().fill(Color.green).frame(width: 5, height: 5); Text(text).font(.system(size: 8, weight: .bold)) }.foregroundStyle(Color(red: 0.05, green: 0.60, blue: 0.40)).padding(.horizontal, 7).padding(.vertical, 4).background(Color.green.opacity(0.16), in: Capsule()).shadow(color: Color.green.opacity(0.70), radius: 10) }
+    var body: some View {
+        HStack(spacing: 4) {
+            Circle().fill(Color.white.opacity(0.72)).frame(width: 5, height: 5)
+            Text(text).font(.system(size: 8, weight: .bold))
+        }
+        .foregroundStyle(Color.white.opacity(0.72))
+        .padding(.horizontal, 7)
+        .padding(.vertical, 4)
+        .background(Color.white.opacity(0.10), in: Capsule())
+        .shadow(color: Color.white.opacity(0.14), radius: 5)
+    }
 }
 
 private struct DeltaMetric: View {
@@ -1580,11 +1597,28 @@ private struct DeltaMetric: View {
     let subtitle: String
     let icon: String
     init(_ title: String, subtitle: String, icon: String) { self.title = title; self.subtitle = subtitle; self.icon = icon }
-    var body: some View { VStack(alignment: .leading, spacing: 3) { Image(systemName: icon).font(.caption2).foregroundStyle(DeltaColors.purple); Text(title).font(.caption2.weight(.bold)).foregroundStyle(DeltaColors.ink); Text(subtitle).font(.system(size: 8)).foregroundStyle(DeltaColors.muted) }.frame(maxWidth: .infinity, alignment: .leading).padding(8).background(DeltaColors.card, in: RoundedRectangle(cornerRadius: 7)).shadow(color: DeltaColors.purple.opacity(0.28), radius: 10) }
+    var body: some View { VStack(alignment: .leading, spacing: 3) { Image(systemName: icon).font(.caption2).foregroundStyle(DeltaColors.accent); Text(title).font(.caption2.weight(.bold)).foregroundStyle(DeltaColors.ink); Text(subtitle).font(.system(size: 8)).foregroundStyle(DeltaColors.muted) }.frame(maxWidth: .infinity, alignment: .leading).padding(8).background(DeltaColors.card, in: RoundedRectangle(cornerRadius: 7)).shadow(color: DeltaColors.accent.opacity(0.28), radius: 10) }
 }
 
 private struct DeltaToggleStyle: ToggleStyle {
-    func makeBody(configuration: Configuration) -> some View { RoundedRectangle(cornerRadius: 12).fill(configuration.isOn ? DeltaColors.purple : Color.gray.opacity(0.45)).frame(width: 37, height: 23).shadow(color: configuration.isOn ? DeltaColors.purple.opacity(0.85) : .clear, radius: 9).overlay(alignment: configuration.isOn ? .trailing : .leading) { Circle().fill(.white).frame(width: 18, height: 18).padding(2) }.animation(.spring(response: 0.24, dampingFraction: 0.8), value: configuration.isOn).onTapGesture { configuration.isOn.toggle() }
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        Button {
+            configuration.isOn.toggle()
+        } label: {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(configuration.isOn ? DeltaColors.accent : Color.gray.opacity(0.45))
+                .frame(width: 37, height: 23)
+                .overlay(alignment: configuration.isOn ? .trailing : .leading) {
+                    Circle().fill(.white).frame(width: 18, height: 18).padding(2)
+                }
+                .animation(.spring(response: 0.24, dampingFraction: 0.8), value: configuration.isOn)
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .accessibilityLabel("Ativar patch")
+        .accessibilityValue(configuration.isOn ? "Ativo" : "Desativado")
     }
 }
 
@@ -1608,7 +1642,7 @@ private struct DeltaSliderRow: View {
         self.range = range
         self.suffix = suffix
     }
-    var body: some View { VStack(spacing: 2) { HStack { Text(title).font(.caption).foregroundStyle(DeltaColors.ink); Spacer(); Text(String(format: suffix == "m" ? "%.0f%@" : suffix == "Â°" ? "%.0f%@" : "%.1f%@", value, suffix)).font(.caption2.weight(.bold)).foregroundStyle(DeltaColors.purple) }; Slider(value: $value, in: range).tint(DeltaColors.purple) } }
+    var body: some View { VStack(spacing: 2) { HStack { Text(title).font(.caption).foregroundStyle(DeltaColors.ink); Spacer(); Text(String(format: suffix == "m" ? "%.0f%@" : suffix == "Â°" ? "%.0f%@" : "%.1f%@", value, suffix)).font(.caption2.weight(.bold)).foregroundStyle(DeltaColors.accent) }; Slider(value: $value, in: range).tint(DeltaColors.accent) } }
 }
 
 private struct DeltaSegmented: View {
@@ -1622,7 +1656,7 @@ private struct DeltaInfoRow: View {
     let label: String
     let value: String
     init(_ label: String, value: String) { self.label = label; self.value = value }
-    var body: some View { HStack { Text(label).font(.caption).foregroundStyle(DeltaColors.muted).shadow(color: DeltaColors.purple.opacity(0.35), radius: 4); Spacer(); Text(value).font(.caption.weight(.bold)).foregroundStyle(DeltaColors.ink).shadow(color: DeltaColors.purple.opacity(0.35), radius: 4) } }
+    var body: some View { HStack { Text(label).font(.caption).foregroundStyle(DeltaColors.muted).shadow(color: DeltaColors.accent.opacity(0.35), radius: 4); Spacer(); Text(value).font(.caption.weight(.bold)).foregroundStyle(DeltaColors.ink).shadow(color: DeltaColors.accent.opacity(0.35), radius: 4) } }
 }
 
 private struct DeltaLanguageButton: View {

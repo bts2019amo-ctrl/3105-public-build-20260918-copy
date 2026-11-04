@@ -437,7 +437,7 @@ struct IOSKeyLoginView: View {
     @State private var clipboardHint: String?
     @State private var vpnAddress: String?
     @State private var vpnDetectionMessage = "O IP detectado é apenas informativo."
-    private let accent = Color(red: 0.24, green: 0.72, blue: 0.86)
+    private let accent = Color(red: 0.70, green: 0.72, blue: 0.74)
 
     private func checkClipboard() {
         guard let clip = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -514,7 +514,7 @@ struct IOSKeyLoginView: View {
                                     .font(.system(size: 10, weight: .heavy, design: .rounded))
                                     .tracking(1.6)
                                     .foregroundStyle(accent)
-                                Text("PROXY iOS")
+                                Text("EXTERNAL SYSTEM")
                                     .font(.system(size: 27, weight: .black, design: .rounded))
                                     .tracking(2.1)
                                     .foregroundStyle(.white)
@@ -648,7 +648,7 @@ struct IOSKeyLoginView: View {
                         }
                         .padding(20)
                         .frame(maxWidth: 420)
-                        .background(Color(red: 0.045, green: 0.052, blue: 0.065).opacity(0.94), in: RoundedRectangle(cornerRadius: 23, style: .continuous))
+                        .background(Color(red: 0.055, green: 0.055, blue: 0.055).opacity(0.94), in: RoundedRectangle(cornerRadius: 23, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 23, style: .continuous).stroke(.white.opacity(0.12), lineWidth: 1))
                         .shadow(color: .black.opacity(0.35), radius: 28, y: 14)
                     }
