@@ -1077,13 +1077,6 @@ private struct DeltaRemoteFeatureTab: View {
         let category: PatchGameCategory = selectedGame == .freeFire ? .normal : .max
         return patchStore.items.filter {
             guard PatchProjectLibrary.category(for: $0) == category else { return false }
-            if feature == .external {
-                let displayName = PatchProjectLibrary.displayName(for: $0)
-                let fileName = $0.packageURL.deletingPathExtension().lastPathComponent
-                return PatchProjectLibrary.featureCategory(for: $0) == .external
-                    || displayName.localizedCaseInsensitiveContains("external")
-                    || fileName.localizedCaseInsensitiveContains("external")
-            }
             return PatchProjectLibrary.featureCategory(for: $0) == feature
         }
     }
