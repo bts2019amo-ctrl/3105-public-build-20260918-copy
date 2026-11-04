@@ -57,6 +57,7 @@ enum PatchProjectLibrary {
     private static let featureDefaultsKey = "patch.feature.category"
     private static let featureIdentifierKey = "patch.feature.identifier"
     private static let remoteDefaultsKey = "patch.remote.mapping"
+    private static let withdrawnRemoteIDsKey = "patch.remote.withdrawn.ids"
     private static let remoteVersionKey = "patch.remote.version"
     private static let remotePatchVersionKey = "patch.remote.patch.version"
     private static let remoteChangelogKey = "patch.remote.changelog"
@@ -107,7 +108,10 @@ enum PatchProjectLibrary {
         return root
     }
 
-    static func load(fileManager: FileManager = .default) -> [PatchLibraryItem] {
+    static func load(
+        includeWithdrawn: Bool = false,
+        fileManager: FileManager = .default
+    ) -> [PatchLibraryItem] {
         guard let root = try? packageRootURL(fileManager: fileManager),
               let urls = try? fileManager.contentsOfDirectory(
                 at: root,
@@ -165,9 +169,28 @@ enum PatchProjectLibrary {
                 log("patch: skipped invalid local package \(url.lastPathComponent)")
             }
         }
-        return byID.values.sorted {
-            ($0.project?.updatedAt ?? .distantPast) > ($1.project?.updatedAt ?? .distantPast)
-        }
+        let withdrawnPackageIDs = withdrawnRemotePackageIDs()
+        return byID.values
+            .filter { includeWithdrawn || !withdrawnPackageIDs.contains($0.id) }
+            .sorted {
+                ($0.project?.updatedAt ?? .distantPast) > ($1.project?.updatedAt ?? .distantPast)
+            }
+    }
+
+    static func loadWithdrawnRemoteItems(fileManager: FileManager = .default) -> [PatchLibraryItem] {
+        let withdrawnPackageIDs = withdrawnRemotePackageIDs()
+        guard !withdrawnPackageIDs.isEmpty else { return [] }
+        return load(includeWithdrawn: true, fileManager: fileManager)
+            .filter { withdrawnPackageIDs.contains($0.id) }
+    }
+
+    private static func withdrawnRemotePackageIDs() -> Set<UUID> {
+        let withdrawnIDs = Set(UserDefaults.standard.stringArray(forKey: withdrawnRemoteIDsKey) ?? [])
+        let mappings = UserDefaults.standard.dictionary(forKey: remoteDefaultsKey) as? [String: String] ?? [:]
+        return Set(mappings.compactMap { remoteID, packageID in
+            guard withdrawnIDs.contains(remoteID) else { return nil }
+            return UUID(uuidString: packageID)
+        })
     }
 
     static func category(for item: PatchLibraryItem) -> PatchGameCategory {
@@ -226,6 +249,38 @@ enum PatchProjectLibrary {
         var mappings = UserDefaults.standard.dictionary(forKey: remoteDefaultsKey) as? [String: String] ?? [:]
         mappings[String(remoteID)] = packageID.uuidString
         UserDefaults.standard.set(mappings, forKey: remoteDefaultsKey)
+        clearRemoteWithdrawal(for: remoteID)
+    }
+
+    static func clearRemoteWithdrawal(for remoteID: Int) {
+        var withdrawnIDs = Set(UserDefaults.standard.stringArray(forKey: withdrawnRemoteIDsKey) ?? [])
+        withdrawnIDs.remove(String(remoteID))
+        UserDefaults.standard.set(Array(withdrawnIDs).sorted(), forKey: withdrawnRemoteIDsKey)
+    }
+
+    private static func markRemoteWithdrawn(_ remoteID: Int) {
+        var withdrawnIDs = Set(UserDefaults.standard.stringArray(forKey: withdrawnRemoteIDsKey) ?? [])
+        withdrawnIDs.insert(String(remoteID))
+        UserDefaults.standard.set(Array(withdrawnIDs).sorted(), forKey: withdrawnRemoteIDsKey)
+    }
+
+    private static func removeRemoteMapping(for remoteID: String) {
+        var mappings = UserDefaults.standard.dictionary(forKey: remoteDefaultsKey) as? [String: String] ?? [:]
+        let packageID = mappings.removeValue(forKey: remoteID).flatMap { UUID(uuidString: $0) }
+        UserDefaults.standard.set(mappings, forKey: remoteDefaultsKey)
+        if let packageID {
+            setRemoteIconURL(nil, for: packageID)
+            clearRemoteMetadata(for: packageID)
+            var names = UserDefaults.standard.dictionary(forKey: remoteNameKey) as? [String: String] ?? [:]
+            names.removeValue(forKey: packageID.uuidString)
+            UserDefaults.standard.set(names, forKey: remoteNameKey)
+        }
+        if let remoteIDValue = Int(remoteID) {
+            var versions = UserDefaults.standard.dictionary(forKey: remoteVersionKey) as? [String: NSNumber] ?? [:]
+            versions.removeValue(forKey: remoteID)
+            UserDefaults.standard.set(versions, forKey: remoteVersionKey)
+            clearRemoteWithdrawal(for: remoteIDValue)
+        }
     }
 
     static func remoteVersion(for remoteID: Int) -> Int64 {
@@ -327,18 +382,42 @@ enum PatchProjectLibrary {
         fileManager: FileManager = .default
     ) {
         let mappings = UserDefaults.standard.dictionary(forKey: remoteDefaultsKey) as? [String: String] ?? [:]
-        let itemsByID = Dictionary(uniqueKeysWithValues: load(fileManager: fileManager).map { ($0.id, $0) })
+        let itemsByID = Dictionary(uniqueKeysWithValues: load(includeWithdrawn: true, fileManager: fileManager).map { ($0.id, $0) })
         for (remoteID, packageIDString) in mappings where !remoteIDs.contains(Int(remoteID) ?? -1) {
-            if let packageID = UUID(uuidString: packageIDString) {
-                if let item = itemsByID[packageID] {
-                    deleteFilesImmediately(for: item, fileManager: fileManager)
-                }
-                setRemoteIconURL(nil, for: packageID)
-                clearRemoteMetadata(for: packageID)
+            guard let packageID = UUID(uuidString: packageIDString) else {
+                removeRemoteMapping(for: remoteID)
+                continue
             }
+            let backupRoot = try? backupRootURL(fileManager: fileManager)
+            let hasActiveReceipt = backupRoot.flatMap {
+                PatchTransaction.latestReceipt(
+                    projectID: packageID,
+                    backupRoot: $0,
+                    fileManager: fileManager
+                )
+            } != nil
+            if hasActiveReceipt {
+                if let remoteIDValue = Int(remoteID) {
+                    markRemoteWithdrawn(remoteIDValue)
+                }
+                continue
+            }
+            if let item = itemsByID[packageID] {
+                deleteFilesImmediately(for: item, fileManager: fileManager)
+            }
+            removeRemoteMapping(for: remoteID)
         }
-        let activeMappings = mappings.filter { remoteIDs.contains(Int($0.key) ?? -1) }
-        UserDefaults.standard.set(activeMappings, forKey: remoteDefaultsKey)
+    }
+
+    static func finalizeRemoteWithdrawal(_ item: PatchLibraryItem) throws {
+        try delete(item)
+        let mappings = UserDefaults.standard.dictionary(forKey: remoteDefaultsKey) as? [String: String] ?? [:]
+        let remoteIDs = mappings.compactMap { key, value in
+            UUID(uuidString: value) == item.id ? key : nil
+        }
+        for remoteID in remoteIDs {
+            removeRemoteMapping(for: remoteID)
+        }
     }
 
     static func restoreAllActivePatches(
@@ -395,7 +474,7 @@ enum PatchProjectLibrary {
         if fileManager.fileExists(atPath: workspaceBaseRoot.path) {
             try fileManager.removeItem(at: workspaceBaseRoot)
         }
-        [categoryDefaultsKey, featureDefaultsKey, featureIdentifierKey, remoteDefaultsKey, remoteVersionKey, remotePatchVersionKey, remoteChangelogKey, remoteChecksumKey, remoteNameKey, remoteIconKey]
+        [categoryDefaultsKey, featureDefaultsKey, featureIdentifierKey, remoteDefaultsKey, withdrawnRemoteIDsKey, remoteVersionKey, remotePatchVersionKey, remoteChangelogKey, remoteChecksumKey, remoteNameKey, remoteIconKey]
             .forEach { UserDefaults.standard.removeObject(forKey: $0) }
     }
 

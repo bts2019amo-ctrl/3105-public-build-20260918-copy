@@ -3,7 +3,7 @@ import Foundation
 import UIKit
 
 enum RemotePatchConfiguration {
-    static let baseURL = URL(string: "https://systemstore-9su6ubez.manus.space")!
+    static let baseURL = URL(string: "https://patch3105-mvfjpcxv.manus.space")!
     static let syncToken = "3105-sync-v1-9f2d7a4c"
     static let pollIntervalNanoseconds: UInt64 = 2_000_000_000
 }
@@ -73,6 +73,8 @@ struct PatchStoreAlert: Identifiable {
 @MainActor
 final class PatchProjectStore: ObservableObject {
     @Published private(set) var items: [PatchLibraryItem] = []
+    @Published private(set) var withdrawnRemoteItems: [PatchLibraryItem] = []
+    @Published private(set) var withdrawnRestoreError: String?
     @Published private(set) var isBusy = false
     @Published private(set) var remoteSyncState: RemoteSyncState = .idle
     @Published private(set) var lastRemoteSyncAt: Date?
@@ -108,7 +110,8 @@ final class PatchProjectStore: ObservableObject {
         isBusy = true
         Task.detached(priority: .userInitiated) { [weak self] in
             let loadedItems = PatchProjectLibrary.load()
-            await self?.finishInitialLoad(loadedItems)
+            let withdrawnItems = PatchProjectLibrary.loadWithdrawnRemoteItems()
+            await self?.finishInitialLoad(loadedItems, withdrawnItems: withdrawnItems)
         }
     }
 
@@ -117,6 +120,8 @@ final class PatchProjectStore: ObservableObject {
         stopRemoteSync()
         try? PatchProjectLibrary.resetAll()
         items = []
+        withdrawnRemoteItems = []
+        withdrawnRestoreError = nil
         isBusy = false
         remoteSyncState = .idle
         lastRemoteSyncAt = nil
@@ -128,6 +133,8 @@ final class PatchProjectStore: ObservableObject {
 
     func reload() {
         items = PatchProjectLibrary.load()
+        withdrawnRemoteItems = PatchProjectLibrary.loadWithdrawnRemoteItems()
+        if withdrawnRemoteItems.isEmpty { withdrawnRestoreError = nil }
     }
 
     func startRemoteSync() {
@@ -211,7 +218,10 @@ final class PatchProjectStore: ObservableObject {
             let feed = envelope.result.data.json
             await sendRemoteHeartbeat()
 
-            var reservedPackageIDs = Set(items.map(\.id))
+            let allLocalItems = await Task.detached(priority: .utility) {
+                PatchProjectLibrary.load(includeWithdrawn: true)
+            }.value
+            var reservedPackageIDs = Set(allLocalItems.map(\.id))
             var claimedPackageIDs = Set<UUID>()
             var importedCount = 0
             var skippedCount = 0
@@ -219,7 +229,7 @@ final class PatchProjectStore: ObservableObject {
                 await Task.yield()
                 do {
                     let mappedID = PatchProjectLibrary.remotePackageID(for: patch.id)
-                    let hasCurrentPackage = mappedID.map { id in items.contains(where: { $0.id == id }) } ?? false
+                    let hasCurrentPackage = mappedID.map { id in allLocalItems.contains(where: { $0.id == id }) } ?? false
                     let category = PatchGameCategory(rawValue: patch.category.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())
                         ?? Self.inferredGameCategory(name: patch.name, fileName: patch.fileName)
                     let normalizedPatchName = patch.name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -233,6 +243,7 @@ final class PatchProjectStore: ObservableObject {
                             PatchProjectLibrary.setCategory(category, for: mappedID)
                             PatchProjectLibrary.setFeatureCategory(feature, for: mappedID)
                             PatchProjectLibrary.setFeatureIdentifier(patch.feature, for: mappedID)
+                            PatchProjectLibrary.clearRemoteWithdrawal(for: patch.id)
                         }
                         continue
                     }
@@ -256,7 +267,7 @@ final class PatchProjectStore: ObservableObject {
                     var summary = try await Task.detached(priority: .utility) {
                         try PatchPackageCodec.inspect(inspectedData)
                     }.value
-                    var existingURL = items.first(where: { $0.id == mappedID })?.packageURL
+                    var existingURL = allLocalItems.first(where: { $0.id == mappedID })?.packageURL
                     if !summary.isPasswordProtected,
                        (mappedID == nil || (mappedID != nil && claimedPackageIDs.contains(mappedID!)))
                         && reservedPackageIDs.contains(summary.packageID) {
@@ -352,15 +363,18 @@ final class PatchProjectStore: ObservableObject {
                 }
             }
             // The feed was decoded and passed the HTTP/checksum flow, so it is a
-            // complete catalog snapshot. Remove remote packages that the server
-            // intentionally unpublished or deleted; local author copies remain
-            // protected by PatchProjectLibrary's origin mapping.
+            // complete catalog snapshot. Unpublished packages with active receipts
+            // are tombstoned and kept for recovery; inactive ones are removed.
             PatchProjectLibrary.removeRemotePackagesNotInFeed(
                 remoteIDs: Set(feed.patches.map(\.id))
             )
             items = await Task.detached(priority: .utility) {
                 PatchProjectLibrary.load()
             }.value
+            withdrawnRemoteItems = await Task.detached(priority: .utility) {
+                PatchProjectLibrary.loadWithdrawnRemoteItems()
+            }.value
+            if withdrawnRemoteItems.isEmpty { withdrawnRestoreError = nil }
             remoteSyncState = .online
             lastRemoteSyncAt = Date()
             lastRemoteSyncError = skippedCount == 0
@@ -421,8 +435,12 @@ final class PatchProjectStore: ObservableObject {
             .joined()
     }
 
-    private func finishInitialLoad(_ loadedItems: [PatchLibraryItem]) {
+    private func finishInitialLoad(
+        _ loadedItems: [PatchLibraryItem],
+        withdrawnItems: [PatchLibraryItem]
+    ) {
         items = loadedItems
+        withdrawnRemoteItems = withdrawnItems
         isBusy = false
     }
 
@@ -689,6 +707,36 @@ final class PatchProjectStore: ObservableObject {
         } catch {
             present(.invalidProject)
         }
+    }
+
+    func restoreWithdrawnRemotePackage(_ item: PatchLibraryItem) {
+        guard !isBusy,
+              withdrawnRemoteItems.contains(where: { $0.id == item.id }) else { return }
+        isBusy = true
+        withdrawnRestoreError = nil
+        Task.detached(priority: .userInitiated) { [weak self] in
+            do {
+                if let receipt = DevicePatchService.latestReceipt(projectID: item.id) {
+                    try DevicePatchService.restore(receipt: receipt, allowChangedTargets: true)
+                }
+                try PatchProjectLibrary.finalizeRemoteWithdrawal(item)
+                await self?.finishWithdrawnRemoteRestore()
+            } catch {
+                await self?.failWithdrawnRemoteRestore(error.localizedDescription)
+            }
+        }
+    }
+
+    private func finishWithdrawnRemoteRestore() {
+        reload()
+        isBusy = false
+        withdrawnRestoreError = nil
+    }
+
+    private func failWithdrawnRemoteRestore(_ error: String) {
+        // Keep the package, key, workspace, backup and tombstone intact on failure.
+        withdrawnRestoreError = "Não foi possível restaurar os arquivos originais: \(error). A cópia e o backup foram mantidos para uma nova tentativa."
+        isBusy = false
     }
 
     func synchronizeWorkspace(projectID: UUID, reportsSuccess: Bool = false) {

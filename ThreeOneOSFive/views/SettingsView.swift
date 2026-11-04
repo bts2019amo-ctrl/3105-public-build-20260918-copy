@@ -39,6 +39,7 @@ struct SettingsView: View {
                     VStack(spacing: 16) {
                         profileCard
                         remoteSyncCard
+                        withdrawnRemoteRecoveryCard
                         languageCard
                         paletteCard
                         appearanceEditorCard
@@ -118,6 +119,50 @@ struct SettingsView: View {
         }
         .padding(18)
         .glassCard()
+    }
+
+    @ViewBuilder
+    private var withdrawnRemoteRecoveryCard: some View {
+        if !patchStore.withdrawnRemoteItems.isEmpty || patchStore.withdrawnRestoreError != nil {
+            VStack(alignment: .leading, spacing: 12) {
+                Label("Recuperação de patches", systemImage: "arrow.uturn.backward.circle.fill")
+                    .font(.headline)
+                    .foregroundStyle(AppTheme.accent)
+                Text("Estes patches foram retirados do catálogo e não aparecem mais na lista. Restaure os arquivos originais antes de remover uma cópia que ainda esteja aplicada; se já foi restaurada, a cópia local pode ser removida.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                ForEach(patchStore.withdrawnRemoteItems) { item in
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(PatchProjectLibrary.displayName(for: item).isEmpty
+                             ? (item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent)
+                             : PatchProjectLibrary.displayName(for: item))
+                            .font(.subheadline.weight(.semibold))
+                        Button {
+                            patchStore.restoreWithdrawnRemotePackage(item)
+                        } label: {
+                            Label("Restaurar se aplicado e remover cópia local", systemImage: "arrow.uturn.backward")
+                                .font(.subheadline.weight(.semibold))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(patchStore.isBusy)
+                    }
+                    .padding(12)
+                    .background(AppTheme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+
+                if let error = patchStore.withdrawnRestoreError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(18)
+            .glassCard()
+        }
     }
 
     private var syncTitle: String {

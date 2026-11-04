@@ -56,7 +56,9 @@ struct RemoteAppConfig: Codable {
     @Published private(set) var config = RemoteAppConfig()
     private var task: Task<Void, Never>?
     private static let cacheKey = "remote.app.config.v1"
-    private static let url = URL(string: "https://systemstore-9su6ubez.manus.space/api/app-config.json")!
+    private static let url = RemotePatchConfiguration.baseURL
+        .appendingPathComponent("api")
+        .appendingPathComponent("app-config.json")
     init() {
         if let data = UserDefaults.standard.data(forKey: Self.cacheKey), let cached = try? JSONDecoder().decode(RemoteAppConfig.self, from: data) { config = cached; apply(cached) }
     }
@@ -200,8 +202,10 @@ enum AppPaths {
 enum AppUpdateChecker {
     static let dismissedVersionKey = "update.dismissedVersion"
     static let presentedUpdateKey = "update.presentedToken"
-    static let apiURL = URL(string: "https://systemstore-9su6ubez.manus.space/api/app-update.json")!
-    static let fallbackURL = URL(string: "https://systemstore-9su6ubez.manus.space/")!
+    static let apiURL = RemotePatchConfiguration.baseURL
+        .appendingPathComponent("api")
+        .appendingPathComponent("app-update.json")
+    static let fallbackURL = RemotePatchConfiguration.baseURL
 
     struct Offer: Identifiable {
         let id = UUID()
