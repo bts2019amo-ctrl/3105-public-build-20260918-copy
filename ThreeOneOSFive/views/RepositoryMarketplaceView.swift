@@ -44,7 +44,6 @@ struct LegacyRepositoryExploreView: View {
                     }
                 }
             }
-                }
                 .scrollContentBackground(.hidden)
                 .listStyle(.insetGrouped)
                 .listRowBackground(Color.white.opacity(0.035))
@@ -239,7 +238,6 @@ struct LegacyRepositorySourcesView: View {
                     }
                 }
             }
-                }
                 .scrollContentBackground(.hidden)
                 .listStyle(.insetGrouped)
                 .listRowBackground(Color.white.opacity(0.035))

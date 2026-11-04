@@ -54,7 +54,6 @@ struct LogView: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { copied = false }
                     } label: {
                         Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                            .contentTransition(.symbolEffect(.replace))
                     }
                     .disabled(appLog.entries.isEmpty)
                     .accessibilityLabel(language.text("logs.copy"))

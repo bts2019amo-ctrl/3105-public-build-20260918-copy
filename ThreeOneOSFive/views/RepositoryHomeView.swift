@@ -234,7 +234,6 @@ struct RepositoryNewView: View {
                     }
                 }
             }
-                }
                 .scrollContentBackground(.hidden)
                 .listStyle(.insetGrouped)
             }

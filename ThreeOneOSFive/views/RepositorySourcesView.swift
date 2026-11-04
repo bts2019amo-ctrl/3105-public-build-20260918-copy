@@ -47,7 +47,6 @@ struct RepositorySourcesView: View {
                     }
                 }
             }
-                }
                 .scrollContentBackground(.hidden)
                 .listStyle(.insetGrouped)
             }
