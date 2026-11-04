@@ -571,52 +571,51 @@ private struct DeltaHeader: View {
     @State private var showSwitchKeyConfirmation = false
 
     var body: some View {
-        ZStack {
+        HStack(spacing: 10) {
+            if showMenuButton {
+                Button(action: onMenu) {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(DeltaColors.ink)
+                        .frame(width: 42, height: 42)
+                        .background(Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(DeltaColors.line, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Abrir menu de navegação")
+            } else {
+                Color.clear.frame(width: 42, height: 42)
+            }
+
             Text("EXTERNAL SYSTEM")
-                .font(.headline.weight(.black))
-                .tracking(2.0)
+                .font(.system(size: 15, weight: .black, design: .rounded))
+                .tracking(1.4)
                 .foregroundStyle(DeltaColors.ink)
                 .lineLimit(1)
-                .minimumScaleFactor(0.75)
+                .minimumScaleFactor(0.72)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityAddTraits(.isHeader)
 
-            HStack {
-                if showMenuButton {
-                    Button(action: onMenu) {
-                        Image(systemName: "line.3.horizontal")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(DeltaColors.ink)
-                            .frame(width: 42, height: 42)
-                            .background(Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(DeltaColors.line, lineWidth: 1))
+            if showKeyButton {
+                Button { showSwitchKeyConfirmation = true } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "key.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text("TROCAR KEY")
+                            .font(.system(size: 9, weight: .heavy, design: .rounded))
+                            .tracking(0.35)
+                            .lineLimit(1)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Abrir menu de navegação")
-                } else {
-                    Color.clear.frame(width: 42, height: 42)
+                    .foregroundStyle(DeltaColors.accent)
+                    .padding(.horizontal, 10)
+                    .frame(height: 42)
+                    .background(DeltaColors.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(DeltaColors.accent.opacity(0.28), lineWidth: 1))
                 }
-                Spacer(minLength: 10)
-                if showKeyButton {
-                    Button { showSwitchKeyConfirmation = true } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "key.fill")
-                                .font(.system(size: 13, weight: .semibold))
-                            Text("TROCAR KEY")
-                                .font(.system(size: 9, weight: .heavy, design: .rounded))
-                                .tracking(0.35)
-                                .lineLimit(1)
-                        }
-                            .foregroundStyle(DeltaColors.accent)
-                            .padding(.horizontal, 10)
-                            .frame(height: 42)
-                            .background(DeltaColors.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(DeltaColors.accent.opacity(0.28), lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Trocar key")
-                } else {
-                    Color.clear.frame(width: 42, height: 42)
-                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Trocar key")
+            } else {
+                Color.clear.frame(width: 42, height: 42)
             }
         }
         .frame(height: 48)
@@ -1247,8 +1246,10 @@ private struct DeltaRemoteFeatureTab: View {
                                                     Circle().fill(.white).frame(width: 18, height: 18).padding(2)
                                                 }
                                                 .animation(.spring(response: 0.24, dampingFraction: 0.8), value: applied)
+                                                .frame(width: 52, height: 44)
+                                                .contentShape(Rectangle())
                                         }
-                                        .buttonStyle(.plain)
+                                        .buttonStyle(ScaleButtonStyle(scale: 0.93))
                                         .disabled(patchStore.isBusy)
                                         .accessibilityLabel(applied ? "Desativar patch" : "Ativar patch")
                                         .accessibilityValue(applied ? "Ativo" : "Desativado")
@@ -1565,7 +1566,11 @@ private struct DeltaCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 9) { content }
             .padding(15)
             .background(DeltaColors.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(DeltaColors.line, lineWidth: 0.9))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(DeltaColors.line, lineWidth: 0.9)
+                    .allowsHitTesting(false)
+            }
             .shadow(color: .black.opacity(0.18), radius: 13, y: 5)
     }
 }
