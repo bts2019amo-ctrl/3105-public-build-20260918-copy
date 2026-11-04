@@ -3,7 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
+    <string>pt-BR</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>pt-BR</string>
+    </array>
     <key>CFBundleDisplayName</key>
     <string>EXTERNAL SYSTEM</string>
     <key>CFBundleExecutable</key>
@@ -19,7 +23,7 @@
     <key>CFBundleShortVersionString</key>
     <string>1.1.1</string>
     <key>CFBundleVersion</key>
-    <string>7</string>
+    <string>11</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>
@@ -63,7 +67,7 @@
         <string>freefiremax</string>
     </array>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>3105 needs access to photos for wallpaper customization.</string>
+    <string>O 3105 precisa acessar suas fotos para personalizar papéis de parede.</string>
     <key>UIApplicationSceneManifest</key>
     <dict>
         <key>UIApplicationSupportsMultipleScenes</key>

@@ -51,13 +51,13 @@ enum AppTheme {
     static let wallpaperBlurStorageKey = "theme.wallpaper.blur"
     static let animationSpeedStorageKey = "theme.animation.speed"
     static let saturationStorageKey = "theme.saturation"
-    static let defaultAccentPalette = AppAccentPalette.lavender.rawValue
+    static let defaultAccentPalette = AppAccentPalette.cyan.rawValue
     static let defaultGlassOpacity = 0.14
     static let defaultWallpaperBlur = 26.0
     static let defaultAnimationSpeed = 1.0
     static let defaultSaturation = 1.0
 
-    static var accent: Color { AppAccentPalette.lavender.color }
+    static var accent: Color { Color(red: 0.20, green: 0.70, blue: 0.82) }
     static var glassOpacity: Double { UserDefaults.standard.object(forKey: glassOpacityStorageKey) as? Double ?? defaultGlassOpacity }
     static var wallpaperBlur: CGFloat { CGFloat(UserDefaults.standard.object(forKey: wallpaperBlurStorageKey) as? Double ?? defaultWallpaperBlur) }
     static var animationSpeed: Double { UserDefaults.standard.object(forKey: animationSpeedStorageKey) as? Double ?? defaultAnimationSpeed }
@@ -181,7 +181,7 @@ struct ParticleFieldBackground: View {
         GeometryReader { _ in
             ZStack {
                 LinearGradient(
-                    colors: [Color(red: 0.018, green: 0.018, blue: 0.026), Color(red: 0.035, green: 0.03, blue: 0.052), .black],
+                    colors: [Color(red: 0.018, green: 0.021, blue: 0.026), Color(red: 0.032, green: 0.040, blue: 0.048), .black],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -233,14 +233,14 @@ struct ParticleFieldBackground: View {
                 path.move(to: a)
                 path.addLine(to: b)
                 let opacity = Double(0.11 * (1 - distance / maxDistance))
-                context.stroke(path, with: .color(Color(red: 0.72, green: 0.62, blue: 0.96).opacity(opacity)), lineWidth: 0.55)
+                context.stroke(path, with: .color(Color(red: 0.18, green: 0.68, blue: 0.78).opacity(opacity)), lineWidth: 0.55)
             }
         }
 
         for (index, point) in points.enumerated() {
             let radius: CGFloat = index.isMultiple(of: 5) ? 2.1 : 1.25
             let dot = Path(ellipseIn: CGRect(x: point.x - radius, y: point.y - radius, width: radius * 2, height: radius * 2))
-            context.fill(dot, with: .color(Color(red: 0.79, green: 0.72, blue: 1).opacity(index.isMultiple(of: 4) ? 0.60 : 0.30)))
+            context.fill(dot, with: .color(Color(red: 0.35, green: 0.76, blue: 0.84).opacity(index.isMultiple(of: 4) ? 0.48 : 0.24)))
         }
     }
 }

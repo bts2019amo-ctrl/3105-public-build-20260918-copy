@@ -30,21 +30,20 @@ struct ExternalSystemShellView: View {
     @EnvironmentObject private var patchStore: PatchProjectStore
     @StateObject private var remoteConfig = RemoteAppConfigStore()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
+    @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.portugueseBrazil.rawValue
 
-    @State private var route: DeltaRoute = .splash
+    @State private var route: DeltaRoute = .selector
     @State private var selectedGame: DeltaGame = .freeFire
     @State private var selectedTab: DeltaTab = .dashboard
-    @State private var showAnnouncement = false
     @State private var showErrorBanner = false
     @AppStorage("externalSystem.streamProofEnabled") private var streamProofEnabled = false
-    @AppStorage(DeltaColors.themeKey) private var themeRaw = DeltaTheme.lavender.rawValue
+    @AppStorage(DeltaColors.themeKey) private var themeRaw = DeltaTheme.graphite.rawValue
     @AppStorage(DeltaColors.darkModeKey) private var darkMode = false
-    @AppStorage(DeltaColors.customHueKey) private var customHue = 0.76
+    @AppStorage(DeltaColors.customHueKey) private var customHue = 0.53
     @State private var isScreenCaptured = UIScreen.screens.contains(where: { $0.isCaptured })
     @State private var screenshotShieldActive = false
 
-    private var isVietnamese: Bool { languageCode == AppLanguage.vietnamese.rawValue }
+    private var isVietnamese: Bool { false }
     private var motion: Animation? { reduceMotion ? nil : .easeInOut(duration: 0.28) }
 
     var body: some View {
@@ -54,16 +53,10 @@ struct ExternalSystemShellView: View {
                 .accessibilityHidden(true)
 
             switch route {
-            case .splash:
-                DeltaSplashView(brandName: remoteConfig.config.brandName, subtitle: remoteConfig.config.subtitle, logoURL: remoteConfig.config.logoUrl)
-                    .transition(.opacity)
             case .selector:
                 DeltaGameSelectorView(
                     selectedGame: $selectedGame,
-                    languageCode: $languageCode,
-                    isVietnamese: isVietnamese,
-                    onSwitchKey: { keySession.logout() },
-                    onEnter: { withAnimation(motion) { showAnnouncement = true } }
+                    onEnter: { withAnimation(motion) { route = .dashboard } }
                 )
                 .transition(.opacity.combined(with: .scale(scale: 0.985)))
             case .dashboard:
@@ -84,17 +77,6 @@ struct ExternalSystemShellView: View {
                 )
                 .environmentObject(remoteConfig)
                 .transition(.opacity)
-            }
-
-            if showAnnouncement {
-                DeltaAnnouncementView(isVietnamese: isVietnamese, config: remoteConfig.config) {
-                    withAnimation(motion) {
-                        showAnnouncement = false
-                        route = .dashboard
-                    }
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .zIndex(10)
             }
 
             if remoteConfig.config.maintenance.enabled {
@@ -138,7 +120,7 @@ struct ExternalSystemShellView: View {
                         VStack(spacing: 10) {
                             Image(systemName: "eye.slash.fill")
                                 .font(.system(size: 28, weight: .bold))
-                            Text(isVietnamese ? "Conteudo protegido" : "Protected content")
+                            Text("Conteúdo protegido")
                                 .font(.headline.weight(.bold))
                         }
                         .foregroundStyle(.white)
@@ -151,14 +133,9 @@ struct ExternalSystemShellView: View {
         .environmentObject(remoteConfig)
         .preferredColorScheme(.dark)
         .animation(motion, value: route)
-        .animation(motion, value: showAnnouncement)
         .task {
             remoteConfig.start()
             await remoteConfig.refresh()
-            guard route == .splash else { return }
-            try? await Task.sleep(nanoseconds: reduceMotion ? 350_000_000 : 1_650_000_000)
-            guard !Task.isCancelled else { return }
-            withAnimation(motion) { route = .selector }
         }
         .onChange(of: route) { newRoute in
             if newRoute == .dashboard {
@@ -257,18 +234,18 @@ private struct DeltaColorWheel: View {
     }
 }
 
-private enum DeltaRoute: Equatable { case splash, selector, dashboard }
+private enum DeltaRoute: Equatable { case selector, dashboard }
 private enum DeltaGame: String, CaseIterable { case freeFire, freeFireMax }
 private enum DeltaTab: Hashable { case dashboard, cache, avatar, hologram, external, skin, settings, custom(String)
     var title: String {
         switch self {
-        case .dashboard: return "Dashboard"
+        case .dashboard: return "Categorias"
         case .cache: return "Cache"
         case .avatar: return "Avatar"
         case .hologram: return "Holograma"
         case .external: return "External"
         case .skin: return "Skin"
-        case .settings: return "Settings"
+        case .settings: return "Configurações"
         case .custom(let identifier): return identifier
         }
     }
@@ -347,20 +324,20 @@ struct DeltaPalette {
             return DeltaPalette(
                 primary: primary,
                 dark: Color(hue: storedHue ?? 0.76, saturation: 0.92, brightness: 0.78),
-                page: Color(red: 0.04, green: 0.025, blue: 0.08),
+                page: Color(red: 0.018, green: 0.021, blue: 0.026),
                 ink: Color.white.opacity(0.97),
                 muted: Color(hue: storedHue ?? 0.76, saturation: 0.18, brightness: 0.72),
-                card: Color(red: 0.07, green: 0.045, blue: 0.12).opacity(0.98),
+                card: Color(red: 0.065, green: 0.074, blue: 0.086).opacity(0.98),
                 line: primary.opacity(0.32)
             )
         }
         return DeltaPalette(
             primary: primary,
             dark: Color(hue: storedHue ?? 0.76, saturation: 0.90, brightness: 0.68),
-            page: Color(hue: storedHue ?? 0.76, saturation: 0.06, brightness: 0.98),
+            page: Color(red: 0.018, green: 0.021, blue: 0.026),
             ink: Color(hue: storedHue ?? 0.76, saturation: 0.58, brightness: 0.16),
             muted: Color(hue: storedHue ?? 0.76, saturation: 0.22, brightness: 0.42),
-            card: Color.white.opacity(0.97),
+            card: Color(red: 0.065, green: 0.074, blue: 0.086).opacity(0.98),
             line: primary.opacity(0.22)
         )
     }
@@ -371,13 +348,13 @@ enum DeltaColors {
     static let darkModeKey = "externalSystem.darkMode"
     static let customHueKey = "externalSystem.customHue"
     private static let palette = DeltaPalette(
-        primary: Color(red: 0.70, green: 0.58, blue: 0.96),
-        dark: Color(red: 0.34, green: 0.24, blue: 0.58),
-        page: Color(red: 0.025, green: 0.025, blue: 0.04),
+        primary: Color(red: 0.20, green: 0.70, blue: 0.82),
+        dark: Color(red: 0.10, green: 0.34, blue: 0.42),
+        page: Color(red: 0.018, green: 0.021, blue: 0.026),
         ink: Color.white.opacity(0.96),
-        muted: Color(red: 0.68, green: 0.68, blue: 0.74),
-        card: Color(red: 0.075, green: 0.07, blue: 0.10).opacity(0.86),
-        line: Color.white.opacity(0.10)
+        muted: Color(red: 0.62, green: 0.66, blue: 0.70),
+        card: Color(red: 0.065, green: 0.074, blue: 0.086).opacity(0.98),
+        line: Color.white.opacity(0.11)
     )
     static var purple: Color { palette.primary }
     static var purpleDark: Color { palette.dark }
@@ -393,183 +370,92 @@ enum DeltaColors {
     }
 }
 
-private struct DeltaSplashView: View {
-    let brandName: String
-    let subtitle: String
-    let logoURL: String?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var pulse = false
-    @State private var loadingIndex = 0
-    private let messages = ["Initializing EXTERNAL SYSTEM Core...", "Loading Injector Engine...", "Preparing dashboard..."]
-
-    var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color.black.opacity(0.16), DeltaColors.purple.opacity(0.10), Color.black.opacity(0.18)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 18) {
-                if let logoURL, let url = URL(string: logoURL) {
-                    AsyncImage(url: url) { phase in
-                        if let image = phase.image { image.resizable().scaledToFit() }
-                        else { AppLogo(size: 92) }
-                    }
-                    .frame(width: 92, height: 92)
-                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .scaleEffect(pulse ? 1.08 : 0.92)
-                    .shadow(color: DeltaColors.purple.opacity(0.45), radius: pulse ? 28 : 12)
-                } else {
-                    AppLogo(size: 92)
-                        .scaleEffect(pulse ? 1.08 : 0.92)
-                        .shadow(color: DeltaColors.purple.opacity(0.45), radius: pulse ? 28 : 12)
-                }
-
-                Text(brandName)
-                    .font(.system(size: 24, weight: .heavy, design: .rounded))
-                    .tracking(0.6)
-                    .foregroundStyle(DeltaColors.ink)
-
-                ProgressView()
-                    .tint(DeltaColors.purple)
-                    .scaleEffect(1.15)
-
-                Text(subtitle.isEmpty ? messages[loadingIndex] : subtitle)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(DeltaColors.muted)
-                    .id(loadingIndex)
-                    .transition(.opacity)
-            }
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) { pulse = true }
-                withAnimation(.easeInOut(duration: 0.3)) { loadingIndex = 1 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) {
-                    withAnimation(.easeInOut(duration: 0.3)) { loadingIndex = 2 }
-                }
-            }
-        }
-    }
-}
-
 private struct DeltaGameSelectorView: View {
     @Binding var selectedGame: DeltaGame
-    @Binding var languageCode: String
-    let isVietnamese: Bool
-    let onSwitchKey: () -> Void
     let onEnter: () -> Void
     @State private var pressed = false
 
     var body: some View {
-        ZStack {
-            VStack(spacing: 0) {
-                DeltaHeader(showMenuButton: false, showKeyButton: true, isVietnamese: isVietnamese, onMenu: {}, onSwitchKey: onSwitchKey)
-                    .padding(.top, 8)
-                    .padding(.horizontal, 20)
+        VStack(spacing: 0) {
+            DeltaHeader(showMenuButton: false, showKeyButton: false, isVietnamese: false, onMenu: {}, onSwitchKey: {})
+                .padding(.top, 8)
+                .padding(.horizontal, 20)
 
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 18) {
-                        VStack(alignment: .leading, spacing: 10) {
-                            AppLogo(size: 54)
-                                .padding(.bottom, 8)
-                            Text(isVietnamese ? "ESCOLHA SEU JOGO" : "CHOOSE YOUR GAME")
-                                .font(.system(size: 11, weight: .heavy, design: .rounded))
-                                .tracking(1.8)
-                                .foregroundStyle(DeltaColors.purple)
-                            Text(isVietnamese ? "Pronto para entrar?" : "Ready to drop in?")
-                                .font(.system(size: 30, weight: .bold, design: .rounded))
-                                .tracking(-0.5)
-                                .foregroundStyle(DeltaColors.ink)
-                                .fixedSize(horizontal: false, vertical: true)
-                            Text(isVietnamese ? "Selecione a versao instalada no seu dispositivo." : "Select the version installed on your device.")
-                                .font(.subheadline)
-                                .foregroundStyle(DeltaColors.muted)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(.top, 30)
-                        .padding(.horizontal, 3)
-
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(isVietnamese ? "VERSAO DO JOGO" : "GAME VERSION")
-                                        .font(.system(size: 10, weight: .heavy, design: .rounded))
-                                        .tracking(1.3)
-                                        .foregroundStyle(DeltaColors.purple)
-                                    Text(isVietnamese ? "Escolha uma opcao" : "Choose one version")
-                                        .font(.caption)
-                                        .foregroundStyle(DeltaColors.muted)
-                                }
-                                Spacer()
-                                Image(systemName: "gamecontroller.fill")
-                                    .font(.system(size: 17, weight: .semibold))
-                                    .foregroundStyle(DeltaColors.purple)
-                                    .frame(width: 38, height: 38)
-                                    .background(DeltaColors.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            }
-                            .padding(.bottom, 3)
-
-                            DeltaGameRow(game: .freeFire, selected: selectedGame == .freeFire) {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { selectedGame = .freeFire }
-                            }
-                            DeltaGameRow(game: .freeFireMax, selected: selectedGame == .freeFireMax) {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { selectedGame = .freeFireMax }
-                            }
-                        }
-                        .padding(16)
-                        .background(DeltaColors.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(DeltaColors.line, lineWidth: 1))
-
-                        Button {
-                            withAnimation(.spring(response: 0.28, dampingFraction: 0.75)) { pressed = true }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-                                withAnimation(.spring(response: 0.28, dampingFraction: 0.75)) { pressed = false }
-                                onEnter()
-                            }
-                        } label: {
-                            HStack(spacing: 11) {
-                                Text(isVietnamese ? "CONTINUAR" : "CONTINUE")
-                                    .font(.subheadline.weight(.heavy))
-                                    .tracking(0.7)
-                                Image(systemName: "arrow.right")
-                                    .font(.system(size: 14, weight: .bold))
-                            }
-                                .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity, minHeight: 54)
-                                .background(
-                                    LinearGradient(colors: [DeltaColors.purpleDark, DeltaColors.purple], startPoint: .leading, endPoint: .trailing),
-                                    in: RoundedRectangle(cornerRadius: 17, style: .continuous)
-                                )
-                                .shadow(color: DeltaColors.purple.opacity(0.30), radius: 18, y: 8)
-                        }
-                        .buttonStyle(.plain)
-                        .scaleEffect(pressed ? 0.96 : 1)
-
-                        HStack(spacing: 10) {
-                            languageButton("ENG", value: AppLanguage.english.rawValue)
-                            languageButton("VN", value: AppLanguage.vietnamese.rawValue)
-                        }
-
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 9) {
+                        Text("SELECIONE SEU JOGO")
+                            .font(.system(size: 11, weight: .heavy, design: .rounded))
+                            .tracking(1.6)
+                            .foregroundStyle(DeltaColors.purple)
+                        Text("Escolha a versão instalada")
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .tracking(-0.4)
+                            .foregroundStyle(DeltaColors.ink)
+                        Text("Os patches exibidos serão referentes ao jogo selecionado.")
+                            .font(.subheadline)
+                            .foregroundStyle(DeltaColors.muted)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 32)
+                    .padding(.top, 34)
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("VERSÃO DO JOGO")
+                                    .font(.system(size: 10, weight: .heavy, design: .rounded))
+                                    .tracking(1.2)
+                                    .foregroundStyle(DeltaColors.purple)
+                                Text("Selecione uma opção")
+                                    .font(.caption)
+                                    .foregroundStyle(DeltaColors.muted)
+                            }
+                            Spacer()
+                            Image(systemName: "gamecontroller.fill")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(DeltaColors.purple)
+                                .frame(width: 38, height: 38)
+                                .background(DeltaColors.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                        .padding(.bottom, 3)
+
+                        DeltaGameRow(game: .freeFire, selected: selectedGame == .freeFire) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { selectedGame = .freeFire }
+                        }
+                        DeltaGameRow(game: .freeFireMax, selected: selectedGame == .freeFireMax) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { selectedGame = .freeFireMax }
+                        }
+                    }
+                    .padding(16)
+                    .background(DeltaColors.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(DeltaColors.line, lineWidth: 1))
+
+                    Button {
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.75)) { pressed = true }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                            withAnimation(.spring(response: 0.28, dampingFraction: 0.75)) { pressed = false }
+                            onEnter()
+                        }
+                    } label: {
+                        HStack(spacing: 11) {
+                            Text("CONTINUAR")
+                                .font(.subheadline.weight(.heavy))
+                                .tracking(0.7)
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 14, weight: .bold))
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, minHeight: 54)
+                        .background(LinearGradient(colors: [DeltaColors.purpleDark, DeltaColors.purple], startPoint: .leading, endPoint: .trailing), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+                        .shadow(color: DeltaColors.purple.opacity(0.24), radius: 16, y: 7)
+                    }
+                    .buttonStyle(.plain)
+                    .scaleEffect(pressed ? 0.96 : 1)
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 32)
             }
         }
-    }
-
-    private func languageButton(_ title: String, value: String) -> some View {
-        Button { withAnimation(.easeInOut(duration: 0.18)) { languageCode = value } } label: {
-            Text(title)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(languageCode == value ? DeltaColors.purple : DeltaColors.muted)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 5)
-                .background(languageCode == value ? DeltaColors.purple.opacity(0.12) : .clear, in: Capsule())
-        }
-        .buttonStyle(.plain)
     }
 }
 
@@ -591,7 +477,7 @@ private struct DeltaGameRow: View {
                     Text(game == .freeFire ? "Free Fire" : "Free Fire MAX")
                         .font(.system(.body, design: .rounded).weight(.bold))
                         .foregroundStyle(DeltaColors.ink)
-                    Text(game == .freeFire ? "STANDARD EDITION" : "ENHANCED EDITION")
+                    Text(game == .freeFire ? "EDIÇÃO PADRÃO" : "EDIÇÃO MAX")
                         .font(.system(size: 9, weight: .bold, design: .rounded))
                         .tracking(0.8)
                         .foregroundStyle(DeltaColors.muted)
@@ -612,64 +498,6 @@ private struct DeltaGameRow: View {
     }
 }
 
-private struct DeltaAnnouncementView: View {
-    let isVietnamese: Bool
-    let config: RemoteAppConfig
-    let dismiss: () -> Void
-    @State private var appeared = false
-
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.40).ignoresSafeArea()
-            VStack(spacing: 0) {
-                ZStack(alignment: .bottomLeading) {
-                    LinearGradient(colors: [DeltaColors.purpleDark, DeltaColors.purple], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(config.brandName.split(separator: " ").first.map(String.init) ?? "EXTERNAL")
-                            .font(.system(size: 40, weight: .black, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.95))
-                        Text(config.brandName.split(separator: " ").dropFirst().joined(separator: " ").isEmpty ? "SYSTEM" : config.brandName.split(separator: " ").dropFirst().joined(separator: " "))
-                            .font(.system(size: 31, weight: .black, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.85))
-                    }
-                    .padding(20)
-                }
-                .frame(height: 150)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack {
-                        Label(config.announcement.enabled && !config.announcement.title.isEmpty ? config.announcement.title : (isVietnamese ? "ThÃ´ng BÃ¡o" : "Announcement"), systemImage: "megaphone.fill")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(DeltaColors.ink)
-                        Spacer()
-                        Button(action: dismiss) { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
-                    }
-                    Text(config.announcement.enabled && !config.announcement.message.isEmpty ? config.announcement.message : (isVietnamese ? "Hiá»n Táº¡i Chá» Sá»­ Dá»¥ng ÄÆ°á»£c Aimbot VÃ  AimBot Vector\n\nEXTERNAL SYSTEM cáº£m Æ¡n cÃ¡c báº¡n ÄÃ£ Äá»£i phiÃªn báº£n má»i.\n\nCÃ³ lá»i gÃ¬ cá»© gÃ³p Ã½ nhÃ©, chÃ¢n thÃ nh cáº£m Æ¡n cÃ¡c báº¡n" : "Hello everyone, this is a beta test version.\n\nCurrently, only AimBot and AimBot Vector are available for use.\n\nEXTERNAL SYSTEM thanks you all for waiting for the new version.\n\nIf you encounter any bugs or issues, feel free to give feedback. Thank you very much!"))
-                        .font(.subheadline)
-                        .foregroundStyle(DeltaColors.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Divider()
-                    Button(action: dismiss) {
-                        Text(isVietnamese ? "ÄÃ HIá»U" : "GOT IT")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, minHeight: 42)
-                            .background(LinearGradient(colors: [DeltaColors.purpleDark, DeltaColors.purple], startPoint: .leading, endPoint: .trailing), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(16)
-            }
-            .background(DeltaColors.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .shadow(color: .black.opacity(0.24), radius: 28, y: 14)
-            .padding(.horizontal, 22)
-            .scaleEffect(appeared ? 1 : 0.94)
-        }
-        .onAppear { withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { appeared = true } }
-    }
-}
-
 private struct DeltaDashboardView: View {
     @Binding var selectedGame: DeltaGame
     @Binding var selectedTab: DeltaTab
@@ -684,7 +512,7 @@ private struct DeltaDashboardView: View {
     var body: some View {
         ZStack(alignment: .top) {
             VStack(spacing: 0) {
-                DeltaHeader(showMenuButton: true, showKeyButton: true, isVietnamese: isVietnamese, onMenu: { showQuickMenu = true }, onSwitchKey: { keySession.logout() })
+                DeltaHeader(showMenuButton: true, showKeyButton: selectedTab == .avatar || selectedTab == .hologram, isVietnamese: false, onMenu: { showQuickMenu = true }, onSwitchKey: { keySession.logout() })
                     .padding(.horizontal, 16)
                     .padding(.top, 7)
 
@@ -696,7 +524,7 @@ private struct DeltaDashboardView: View {
                             } label: {
                                 HStack(spacing: 7) {
                                     Image(systemName: "arrow.left")
-                                    Text(isVietnamese ? "TODAS AS CATEGORIAS" : "ALL CATEGORIES")
+                                    Text("TODAS AS CATEGORIAS")
                                 }
                                 .font(.system(size: 10, weight: .bold, design: .rounded))
                                 .tracking(0.7)
@@ -776,7 +604,7 @@ private struct DeltaHeader: View {
                             .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(DeltaColors.line, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Open navigation menu")
+                    .accessibilityLabel("Abrir menu de navegação")
                 } else {
                     Color.clear.frame(width: 42, height: 42)
                 }
@@ -805,11 +633,11 @@ private struct DeltaHeader: View {
             }
         }
         .frame(height: 48)
-        .alert(isVietnamese ? "Đổi key?" : "Trocar key?", isPresented: $showSwitchKeyConfirmation) {
-            Button(isVietnamese ? "Hủy" : "Cancelar", role: .cancel) { }
-            Button(isVietnamese ? "Đổi key" : "Trocar key", role: .destructive, action: onSwitchKey)
+        .alert("Trocar key?", isPresented: $showSwitchKeyConfirmation) {
+            Button("Cancelar", role: .cancel) { }
+            Button("Trocar key", role: .destructive, action: onSwitchKey)
         } message: {
-            Text(isVietnamese ? "Đổi key sẽ đăng xuất, thử khôi phục patch đã áp dụng rồi xóa dữ liệu cục bộ. Tiếp tục?" : "Trocar a key encerra a sessão e tenta restaurar os patches aplicados antes de limpar os dados locais. Deseja continuar?")
+            Text("Trocar a key encerra a sessão e tenta restaurar os patches aplicados antes de limpar os dados locais. Deseja continuar?")
         }
     }
 }
@@ -822,18 +650,18 @@ private struct DeltaQuickMenu: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(isVietnamese ? "ACESSO RAPIDO" : "QUICK ACCESS")
+                Text("NAVEGAÇÃO RÁPIDA")
                     .font(.system(size: 10, weight: .heavy, design: .rounded))
                     .tracking(1.5)
                     .foregroundStyle(DeltaColors.purple)
-                Text(isVietnamese ? "Escolha uma categoria" : "Choose a category")
+                Text("Escolha uma categoria")
                     .font(.system(.title3, design: .rounded).weight(.bold))
                     .foregroundStyle(DeltaColors.ink)
             }
 
             VStack(spacing: 9) {
-                menuItem(.avatar, subtitle: isVietnamese ? "Avatares disponiveis" : "Available avatars")
-                menuItem(.hologram, subtitle: isVietnamese ? "Efeitos holograficos" : "Hologram effects")
+                menuItem(.avatar, subtitle: "Patches de avatar")
+                menuItem(.hologram, subtitle: "Patches de holograma")
             }
         }
         .padding(22)
@@ -852,11 +680,6 @@ private struct DeltaQuickMenu: View {
             dismiss()
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: tab.icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(DeltaColors.purple)
-                    .frame(width: 42, height: 42)
-                    .background(DeltaColors.purple.opacity(0.13), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(tab.title).font(.subheadline.weight(.bold)).foregroundStyle(DeltaColors.ink)
                     Text(subtitle).font(.caption2).foregroundStyle(DeltaColors.muted)
@@ -972,16 +795,16 @@ private struct DeltaTabBar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 5) {
-                Text(isVietnamese ? "CENTRAL DE PATCHES" : "PATCH CONTROL CENTER")
+                Text("CENTRAL DE PATCHES")
                     .font(.system(size: 10, weight: .heavy, design: .rounded))
                     .tracking(1.5)
                     .foregroundStyle(DeltaColors.purple)
-                Text(isVietnamese ? "O que vamos carregar?" : "What are we loading?")
+                Text("O que vamos carregar?")
                     .font(.title2.weight(.bold))
                     .tracking(-0.4)
                     .foregroundStyle(DeltaColors.ink)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(isVietnamese ? "Selecione uma versao e depois explore as categorias." : "Select a game version, then browse its patch categories.")
+                Text("Selecione uma versão e explore as categorias de patches disponíveis.")
                     .font(.caption)
                     .foregroundStyle(DeltaColors.muted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -990,7 +813,7 @@ private struct DeltaTabBar: View {
 
             VStack(alignment: .leading, spacing: 11) {
                 HStack {
-                    Text(isVietnamese ? "JOGO ATIVO" : "ACTIVE GAME")
+                    Text("JOGO ATIVO")
                         .font(.system(size: 10, weight: .heavy, design: .rounded))
                         .tracking(1.1)
                         .foregroundStyle(DeltaColors.muted)
@@ -1008,7 +831,7 @@ private struct DeltaTabBar: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .lastTextBaseline) {
-                    Text(isVietnamese ? "CATEGORIAS" : "CATEGORIES")
+                    Text("CATEGORIAS")
                         .font(.system(size: 10, weight: .heavy, design: .rounded))
                         .tracking(1.25)
                         .foregroundStyle(DeltaColors.purple)
@@ -1278,11 +1101,11 @@ private struct DeltaRemoteFeatureTab: View {
 
     private var title: String {
         switch feature {
-        case .cache: return "CACHE PATCHES"
-        case .avatar: return "AVATAR PATCHES"
-        case .hologram: return "HOLOGRAM PATCHES"
-        case .external: return "EXTERNAL PATCHES"
-        case .skin: return "SKIN PATCHES"
+        case .cache: return "PATCHES DE CACHE"
+        case .avatar: return "PATCHES DE AVATAR"
+        case .hologram: return "PATCHES DE HOLOGRAMA"
+        case .external: return "PATCHES EXTERNOS"
+        case .skin: return "PATCHES DE SKIN"
         }
     }
 
@@ -1317,11 +1140,11 @@ private struct DeltaRemoteFeatureTab: View {
                         DeltaSectionTitle(title, icon: icon)
                     }
                     Spacer()
-                    Text("\(items.count) REMOTE")
+                    Text("\(items.count) REMOTOS")
                         .font(.system(size: 8, weight: .black))
                         .foregroundStyle(DeltaColors.purple)
                 }
-                Text("Toque no patch para expandir. Depois voce pode aplicar ou restaurar o original.")
+                Text("Toque em um patch para ver os controles. Você pode ativá-lo ou restaurar o original.")
                     .font(.caption)
                     .foregroundStyle(DeltaColors.muted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1337,7 +1160,7 @@ private struct DeltaRemoteFeatureTab: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(DeltaColors.ink)
                             .multilineTextAlignment(.center)
-                        Text("Atualize o feed no Dashboard e permaneca nesta aba para acompanhar os patches recebidos.")
+                        Text("Atualize a lista de patches e permaneça nesta categoria para acompanhar novos itens.")
                             .font(.caption)
                             .foregroundStyle(DeltaColors.muted)
                             .multilineTextAlignment(.center)
@@ -1375,7 +1198,7 @@ private struct DeltaRemoteFeatureTab: View {
                                         .font(.subheadline.weight(.bold))
                                         .foregroundStyle(DeltaColors.ink)
                                         .lineLimit(1)
-                                    Text(applied ? (feature == .external ? "Running â tap to clear data" : "Applied â tap to restore") : item.isLocked ? "Protected â tap to unlock" : "Tap to configure")
+                                    Text(applied ? (feature == .external ? "Ativo — toque para limpar os dados" : "Aplicado — toque para restaurar") : item.isLocked ? "Protegido — toque para desbloquear" : "Toque para configurar")
                                         .font(.caption2)
                                         .foregroundStyle(DeltaColors.muted)
                                 }
@@ -1392,7 +1215,7 @@ private struct DeltaRemoteFeatureTab: View {
                                 Button {
                                     patchStore.requestUnlock(for: item)
                                 } label: {
-                                    Label("UNLOCK PATCH", systemImage: "lock.open.fill")
+                                    Label("DESBLOQUEAR PATCH", systemImage: "lock.open.fill")
                                         .font(.system(size: 11, weight: .black))
                                         .foregroundStyle(.white)
                                         .frame(maxWidth: .infinity, minHeight: 40)
@@ -1403,12 +1226,12 @@ private struct DeltaRemoteFeatureTab: View {
                             } else {
                                 HStack(spacing: 12) {
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(applied ? (feature == .external ? "Running" : "Applied") : "Off")
+                                        Text(applied ? (feature == .external ? "Em execução" : "Aplicado") : "Desativado")
                                             .font(.caption.weight(.semibold))
                                             .foregroundStyle(DeltaColors.ink)
                                         Text(applied
-                                              ? (feature == .external ? "Turn off to clear data" : "Turn off to restore original")
-                                              : (feature == .external ? "Turn on to start" : "Turn on to apply patch"))
+                                              ? (feature == .external ? "Desative para limpar os dados" : "Desative para restaurar o original")
+                                              : (feature == .external ? "Ative para iniciar" : "Ative para aplicar o patch"))
                                             .font(.caption2)
                                             .foregroundStyle(DeltaColors.muted)
                                     }
@@ -1423,6 +1246,19 @@ private struct DeltaRemoteFeatureTab: View {
                                     .labelsHidden()
                                     .toggleStyle(DeltaToggleStyle())
                                     .disabled(patchStore.isBusy)
+                                    Button {
+                                        patchStore.restoreInline(item)
+                                    } label: {
+                                        Label("Restaurar", systemImage: "arrow.counterclockwise")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundStyle(DeltaColors.purple)
+                                            .padding(.horizontal, 10)
+                                            .frame(height: 36)
+                                            .background(DeltaColors.purple.opacity(0.10), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                                            .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(DeltaColors.purple.opacity(0.24), lineWidth: 1))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .disabled(!applied || patchStore.isBusy)
                                 }
                                 .padding(.vertical, 4)
                             }
@@ -1459,7 +1295,7 @@ private struct DeltaRemoteCustomFeatureTab: View {
         VStack(spacing: 12) {
             DeltaCard {
                 DeltaSectionTitle("\(title.uppercased()) PATCHES", icon: icon)
-                Text("Toque no patch para expandir. Depois voce pode aplicar ou restaurar o original.")
+                Text("Toque em um patch para ver os controles. Você pode ativá-lo ou restaurar o original.")
                     .font(.caption)
                     .foregroundStyle(DeltaColors.muted)
             }
@@ -1488,7 +1324,7 @@ private struct DeltaRemoteCustomFeatureTab: View {
                                 }
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(PatchProjectLibrary.displayName(for: item)).font(.subheadline.weight(.bold)).foregroundStyle(DeltaColors.ink).lineLimit(1)
-                                    Text(applied ? "Applied â tap to restore" : item.isLocked ? "Protected â tap to unlock" : "Tap to configure").font(.caption2).foregroundStyle(DeltaColors.muted)
+                                    Text(applied ? "Aplicado — toque para restaurar" : item.isLocked ? "Protegido — toque para desbloquear" : "Toque para configurar").font(.caption2).foregroundStyle(DeltaColors.muted)
                                 }
                                 Spacer()
                                 Image(systemName: expandedItemID == item.id ? "chevron.up.circle.fill" : "chevron.down.circle").foregroundStyle(DeltaColors.purple)
@@ -1498,7 +1334,7 @@ private struct DeltaRemoteCustomFeatureTab: View {
                             Divider().overlay(DeltaColors.purple.opacity(0.12))
                             if item.isLocked {
                                 Button { patchStore.requestUnlock(for: item) } label: {
-                                    Label("UNLOCK PATCH", systemImage: "lock.open.fill")
+                                    Label("DESBLOQUEAR PATCH", systemImage: "lock.open.fill")
                                         .font(.system(size: 11, weight: .black))
                                         .foregroundStyle(.white)
                                         .frame(maxWidth: .infinity, minHeight: 40)
@@ -1509,10 +1345,10 @@ private struct DeltaRemoteCustomFeatureTab: View {
                             } else {
                                 HStack(spacing: 12) {
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(applied ? "Applied" : "Not applied")
+                                        Text(applied ? "Aplicado" : "Não aplicado")
                                             .font(.caption.weight(.semibold))
                                             .foregroundStyle(DeltaColors.ink)
-                                        Text(applied ? "Turn off to restore original" : "Turn on to apply patch")
+                                        Text(applied ? "Desative para restaurar o original" : "Ative para aplicar o patch")
                                             .font(.caption2)
                                             .foregroundStyle(DeltaColors.muted)
                                     }
@@ -1527,6 +1363,19 @@ private struct DeltaRemoteCustomFeatureTab: View {
                                     .labelsHidden()
                                     .toggleStyle(DeltaToggleStyle())
                                     .disabled(patchStore.isBusy)
+                                    Button {
+                                        patchStore.restoreInline(item)
+                                    } label: {
+                                        Label("Restaurar", systemImage: "arrow.counterclockwise")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundStyle(DeltaColors.purple)
+                                            .padding(.horizontal, 10)
+                                            .frame(height: 36)
+                                            .background(DeltaColors.purple.opacity(0.10), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                                            .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(DeltaColors.purple.opacity(0.24), lineWidth: 1))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .disabled(!applied || patchStore.isBusy)
                                 }
                                 .padding(.vertical, 4)
                             }

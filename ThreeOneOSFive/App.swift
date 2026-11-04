@@ -13,22 +13,19 @@ struct ThreeOneOSFiveApp: App {
     @StateObject private var patchStore = PatchProjectStore(autoLoad: false)
     @StateObject private var repositoryStore = PackageRepositoryStore()
     @StateObject private var keySession = IOSKeySession()
-    @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
-    @AppStorage(AppTheme.accentPaletteStorageKey) private var accentPalette = AppTheme.defaultAccentPalette
-    @State private var showOnboarding = false
     @State private var showAttribution = false
     @State private var updateOffer: AppUpdateChecker.Offer?
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init() {
+        UserDefaults.standard.set(AppLanguage.portugueseBrazil.rawValue, forKey: AppLanguage.storageKey)
         AD_applyEarlyProtections()
         PatchWorkspaceService.removeLegacyDocumentsPatchStorage()
         setupLogCapture()
         log("app: 3105 launching — iOS \(AppInfo.osVersion) (\(AppInfo.osBuild)) \(AppInfo.machineName)")
     }
 
-    private var language: AppLanguage { AppLanguage(rawValue: languageCode) ?? .english }
+    private var language: AppLanguage { .portugueseBrazil }
 
     private func checkForUpdate() {
         Task {
@@ -40,10 +37,6 @@ struct ThreeOneOSFiveApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                if !keySession.isAuthenticated || showOnboarding {
-                    ParticleFieldBackground()
-                }
-
                 if keySession.isAuthenticated {
                     ContentView()
                         .environmentObject(appState)
@@ -54,27 +47,13 @@ struct ThreeOneOSFiveApp: App {
                         .environmentObject(repositoryStore)
                         .environment(\.appLanguage, language)
                         .environment(\.locale, language.locale)
-                        .opacity(showOnboarding ? 0 : 1)
-                        .allowsHitTesting(!showOnboarding)
                 } else {
                     IOSKeyLoginView(session: keySession)
                         .environment(\.appLanguage, language)
                         .environment(\.locale, language.locale)
                 }
-                if keySession.isAuthenticated && showOnboarding {
-                    OnboardingView {
-                        OnboardingStore.markCompleted()
-                        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) { showOnboarding = false }
-                        appState.detectSupport()
-                        checkForUpdate()
-                    }
-                    .environment(\.appLanguage, language)
-                    .environment(\.locale, language.locale)
-                    .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.98)))
-                    .zIndex(1)
-                }
             }
-            .displayIdentityAttribution(isPresented: $showAttribution, enabled: keySession.isAuthenticated && !showOnboarding)
+            .displayIdentityAttribution(isPresented: $showAttribution, enabled: keySession.isAuthenticated)
             .sheet(isPresented: $showAttribution) { DisplayAttributionSheet() }
             .alert(item: $updateOffer) { offer in
                 Alert(
@@ -85,7 +64,7 @@ struct ThreeOneOSFiveApp: App {
                 )
             }
             .onAppear {
-                if keySession.isAuthenticated && !showOnboarding {
+                if keySession.isAuthenticated {
                     PatchProjectLibrary.removeObsoleteProtectedStorage()
                     patchStore.activate()
                     patchStore.startRemoteSync()
@@ -104,7 +83,7 @@ struct ThreeOneOSFiveApp: App {
                 }
             }
             .onChange(of: scenePhase) { phase in
-                guard phase == .active, !showOnboarding, keySession.isAuthenticated else { return }
+                guard phase == .active, keySession.isAuthenticated else { return }
                 keySession.validateIntegrityOnForeground()
                 patchStore.reload()
                 Task { await keySession.refresh() }
@@ -114,7 +93,7 @@ struct ThreeOneOSFiveApp: App {
             .task(id: keySession.isAuthenticated) {
                 guard keySession.isAuthenticated else { return }
                 while !Task.isCancelled {
-                    if !showOnboarding { checkForUpdate() }
+                    checkForUpdate()
                     try? await Task.sleep(nanoseconds: 10_000_000_000)
                 }
             }
@@ -455,140 +434,228 @@ struct IOSKeyLoginView: View {
     @State private var key = ""
     @State private var isKeyVisible = false
     @State private var appeared = false
-    @State private var clipboardHint: String? = nil
-    @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
-    private var language: AppLanguage { AppLanguage(rawValue: languageCode) ?? .english }
-    private let lavender = Color(red: 0.73, green: 0.63, blue: 0.98)
+    @State private var clipboardHint: String?
+    @State private var vpnAddress: String?
+    @State private var vpnDetectionMessage = "O IP detectado é apenas informativo."
+    private let accent = Color(red: 0.24, green: 0.72, blue: 0.86)
+
     private func checkClipboard() {
         guard let clip = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !clip.isEmpty, clip.count >= 8, clip.count <= 128 else { clipboardHint = nil; return }
+              !clip.isEmpty, clip.count >= 8, clip.count <= 128 else {
+            clipboardHint = nil
+            return
+        }
         clipboardHint = key.isEmpty ? clip : nil
     }
+
     private func pasteFromClipboard() {
-        if let hint = clipboardHint { key = hint; clipboardHint = nil }
+        if let hint = clipboardHint {
+            key = hint
+            clipboardHint = nil
+        }
     }
+
+    private var trimmedKeyIsEmpty: Bool {
+        key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func detectVPNAddress() {
+        var interfaces: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&interfaces) == 0, let first = interfaces else {
+            vpnAddress = nil
+            vpnDetectionMessage = "Não foi possível consultar as interfaces de rede."
+            return
+        }
+        defer { freeifaddrs(first) }
+
+        var current: UnsafeMutablePointer<ifaddrs>? = first
+        while let interface = current {
+            let entry = interface.pointee
+            current = entry.ifa_next
+            let name = String(cString: entry.ifa_name)
+            guard name.hasPrefix("utun") || name.hasPrefix("ipsec") || name.hasPrefix("ppp"),
+                  let socketAddress = entry.ifa_addr,
+                  socketAddress.pointee.sa_family == sa_family_t(AF_INET) else { continue }
+
+            let ipv4 = UnsafeRawPointer(socketAddress).assumingMemoryBound(to: sockaddr_in.self).pointee
+            var address = ipv4.sin_addr
+            var buffer = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+            guard inet_ntop(AF_INET, &address, &buffer, socklen_t(INET_ADDRSTRLEN)) != nil else { continue }
+            let value = String(cString: buffer)
+            guard value != "0.0.0.0" else { continue }
+            vpnAddress = value
+            vpnDetectionMessage = "IP local encontrado; não é enviado na validação da key."
+            return
+        }
+
+        vpnAddress = nil
+        vpnDetectionMessage = "Nenhuma interface VPN IPv4 ativa foi encontrada."
+    }
+
     var body: some View {
         ZStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    Spacer(minLength: 44)
-                    VStack(spacing: 18) {
-                        ZStack {
-                            Circle()
-                                .fill(lavender.opacity(0.12))
-                                .frame(width: 116, height: 116)
-                                .overlay(Circle().stroke(lavender.opacity(0.26), lineWidth: 1))
-                            AppLogo(size: 72)
-                                .shadow(color: lavender.opacity(0.25), radius: 22, y: 6)
-                        }
-                        VStack(spacing: 8) {
-                            Text("PROXY IOS")
-                                .font(.largeTitle.weight(.black))
-                                .tracking(2.4)
-                                .foregroundStyle(.white)
-                                .multilineTextAlignment(.center)
-                                .minimumScaleFactor(0.75)
-                                .lineLimit(1)
-                            Text(language.text("login.subtitle"))
-                                .font(.body)
-                                .foregroundStyle(.white.opacity(0.67))
-                                .multilineTextAlignment(.center)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    .frame(maxWidth: 440)
-                    .padding(.horizontal, 28)
-                    .opacity(appeared ? 1 : 0)
+            ParticleFieldBackground()
 
-                    VStack(alignment: .leading, spacing: 18) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("ACCESS KEY")
-                                .font(.caption.weight(.bold))
-                                .tracking(1.3)
-                                .foregroundStyle(.white.opacity(0.68))
-                            HStack(spacing: 12) {
-                                Image(systemName: "key.fill")
-                                    .font(.system(size: 17, weight: .semibold))
-                                    .foregroundStyle(lavender)
-                                    .frame(width: 22)
-                                Group {
-                                    if isKeyVisible { TextField(language.text("login.key_placeholder"), text: $key) }
-                                    else { SecureField(language.text("login.key_placeholder"), text: $key) }
+            ScrollView(showsIndicators: false) {
+                VStack {
+                    Spacer(minLength: 24)
+                    VStack(spacing: 24) {
+                        VStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(accent.opacity(0.10))
+                                    .frame(width: 82, height: 82)
+                                    .overlay(Circle().stroke(accent.opacity(0.26), lineWidth: 1))
+                                AppLogo(size: 54)
+                                    .shadow(color: accent.opacity(0.18), radius: 16, y: 4)
+                            }
+                            VStack(spacing: 6) {
+                                Text("ACESSO LICENCIADO")
+                                    .font(.system(size: 10, weight: .heavy, design: .rounded))
+                                    .tracking(1.6)
+                                    .foregroundStyle(accent)
+                                Text("PROXY iOS")
+                                    .font(.system(size: 27, weight: .black, design: .rounded))
+                                    .tracking(2.1)
+                                    .foregroundStyle(.white)
+                                    .accessibilityAddTraits(.isHeader)
+                                Text("Informe sua key para continuar.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.white.opacity(0.62))
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
+
+                        VStack(alignment: .leading, spacing: 15) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("KEY DE LICENÇA")
+                                    .font(.caption.weight(.bold))
+                                    .tracking(1.1)
+                                    .foregroundStyle(.white.opacity(0.72))
+                                HStack(spacing: 11) {
+                                    Image(systemName: "key.fill")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(accent)
+                                        .frame(width: 22)
+                                    Group {
+                                        if isKeyVisible {
+                                            TextField("Digite sua key iOS", text: $key)
+                                        } else {
+                                            SecureField("Digite sua key iOS", text: $key)
+                                        }
+                                    }
+                                    .font(.body.weight(.medium))
+                                    .foregroundStyle(.white)
+                                    .tint(accent)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled()
+                                    .submitLabel(.go)
+                                    .onSubmit { session.submit(key) }
+                                    .accessibilityLabel("Key iOS")
+                                    Button { isKeyVisible.toggle() } label: {
+                                        Image(systemName: isKeyVisible ? "eye.slash.fill" : "eye.fill")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundStyle(.white.opacity(0.68))
+                                            .frame(minWidth: 36, minHeight: 44)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel(isKeyVisible ? "Ocultar key" : "Mostrar key")
                                 }
-                                .font(.body.weight(.medium))
-                                .foregroundStyle(.white)
-                                .tint(lavender)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled()
-                                .accessibilityLabel(language.text("login.key_placeholder"))
-                                Button { isKeyVisible.toggle() } label: {
-                                    Image(systemName: isKeyVisible ? "eye.slash.fill" : "eye.fill")
-                                        .font(.system(size: 17, weight: .semibold))
-                                        .foregroundStyle(.white.opacity(0.72))
-                                        .frame(minWidth: 36, minHeight: 44)
+                                .padding(.horizontal, 13)
+                                .frame(minHeight: 54)
+                                .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(.white.opacity(0.14), lineWidth: 1))
+                            }
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("IP DA VPN")
+                                    .font(.caption.weight(.bold))
+                                    .tracking(1.1)
+                                    .foregroundStyle(.white.opacity(0.72))
+                                HStack(spacing: 10) {
+                                    Image(systemName: "network")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(accent)
+                                    Text(vpnAddress ?? "Toque para detectar o IP da VPN")
+                                        .font(.subheadline.monospaced())
+                                        .foregroundStyle(vpnAddress == nil ? .white.opacity(0.48) : .white)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.75)
+                                    Spacer(minLength: 4)
+                                    Button(action: detectVPNAddress) {
+                                        Text("DETECTAR IP DA KEY")
+                                            .font(.system(size: 9, weight: .heavy, design: .rounded))
+                                            .tracking(0.25)
+                                            .foregroundStyle(accent)
+                                            .padding(.horizontal, 10)
+                                            .frame(minHeight: 38)
+                                            .background(accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .padding(.horizontal, 12)
+                                .frame(minHeight: 52)
+                                .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).stroke(.white.opacity(0.11), lineWidth: 1))
+                                Text(vpnDetectionMessage)
+                                    .font(.caption2)
+                                    .foregroundStyle(.white.opacity(0.48))
+                            }
+
+                            if let hint = clipboardHint {
+                                Button(action: pasteFromClipboard) {
+                                    HStack(spacing: 9) {
+                                        Image(systemName: "doc.on.clipboard")
+                                            .font(.system(size: 14, weight: .semibold))
+                                        Text("Colar key da área de transferência")
+                                            .font(.subheadline.weight(.semibold))
+                                        Spacer(minLength: 0)
+                                        Text(String(hint.prefix(8)) + "…")
+                                            .font(.caption.monospaced())
+                                            .foregroundStyle(.white.opacity(0.50))
+                                    }
+                                    .foregroundStyle(accent)
+                                    .padding(.horizontal, 12)
+                                    .frame(minHeight: 42)
+                                    .background(accent.opacity(0.09), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel(isKeyVisible ? "Hide key" : "Show key")
                             }
-                            .padding(.horizontal, 14)
-                            .frame(minHeight: 56)
-                            .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).stroke(.white.opacity(0.15), lineWidth: 1))
-                        }
 
-                        if let hint = clipboardHint {
-                            Button { pasteFromClipboard() } label: {
+                            Button { session.submit(key) } label: {
                                 HStack(spacing: 9) {
-                                    Image(systemName: "doc.on.clipboard").font(.system(size: 14, weight: .semibold))
-                                    Text("Colar chave do clipboard").font(.subheadline.weight(.semibold))
-                                    Spacer(minLength: 0)
-                                    Text(String(hint.prefix(10)) + "…").font(.caption.monospaced()).foregroundStyle(.white.opacity(0.55))
+                                    if session.isChecking { ProgressView().tint(.black) }
+                                    Text(session.isChecking ? "Verificando…" : "Entrar")
+                                        .font(.headline.weight(.bold))
                                 }
-                                .foregroundStyle(lavender)
-                                .padding(.horizontal, 13)
-                                .frame(minHeight: 44)
-                                .background(lavender.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .foregroundStyle(.black)
+                                .frame(maxWidth: .infinity, minHeight: 52)
+                                .background(accent, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .shadow(color: accent.opacity(0.16), radius: 14, y: 5)
                             }
                             .buttonStyle(.plain)
-                        }
+                            .disabled(session.isChecking || trimmedKeyIsEmpty)
+                            .opacity(session.isChecking || trimmedKeyIsEmpty ? 0.58 : 1)
 
-                        Button { session.submit(key) } label: {
-                            HStack(spacing: 9) {
-                                if session.isChecking { ProgressView().tint(.black) }
-                                Text(session.isChecking ? "Verificando…" : "Entrar")
-                                    .font(.headline.weight(.bold))
+                            if let error = session.errorMessage {
+                                Label(error, systemImage: "exclamationmark.triangle.fill")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(Color(red: 1, green: 0.53, blue: 0.58))
+                                    .multilineTextAlignment(.center)
+                                    .frame(maxWidth: .infinity)
+                                    .accessibilityAddTraits(.updatesFrequently)
                             }
-                            .foregroundStyle(.black)
-                            .frame(maxWidth: .infinity, minHeight: 54)
-                            .background(
-                                LinearGradient(colors: [Color(red: 0.83, green: 0.76, blue: 1), lavender], startPoint: .topLeading, endPoint: .bottomTrailing),
-                                in: RoundedRectangle(cornerRadius: 15, style: .continuous)
-                            )
-                            .shadow(color: lavender.opacity(0.2), radius: 16, y: 6)
                         }
-                        .buttonStyle(.plain)
-                        .disabled(session.isChecking || key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        .opacity(session.isChecking || key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.62 : 1)
-
-                        if let error = session.errorMessage {
-                            Label(error, systemImage: "exclamationmark.triangle.fill")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(Color(red: 1, green: 0.53, blue: 0.58))
-                                .multilineTextAlignment(.center)
-                                .frame(maxWidth: .infinity)
-                                .padding(.horizontal, 6)
-                                .accessibilityAddTraits(.updatesFrequently)
-                        }
+                        .padding(20)
+                        .frame(maxWidth: 420)
+                        .background(Color(red: 0.045, green: 0.052, blue: 0.065).opacity(0.94), in: RoundedRectangle(cornerRadius: 23, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 23, style: .continuous).stroke(.white.opacity(0.12), lineWidth: 1))
+                        .shadow(color: .black.opacity(0.35), radius: 28, y: 14)
                     }
-                    .padding(22)
-                    .frame(maxWidth: 440)
-                    .background(Color(red: 0.055, green: 0.05, blue: 0.075).opacity(0.82), in: RoundedRectangle(cornerRadius: 25, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 25, style: .continuous).stroke(.white.opacity(0.13), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.30), radius: 28, y: 14)
-                    .padding(.top, 32)
-                    .padding(.horizontal, 22)
+                    .frame(maxWidth: 420)
+                    .padding(.horizontal, 24)
                     .opacity(appeared ? 1 : 0)
-                    Spacer(minLength: 34)
+                    Spacer(minLength: 24)
                 }
                 .frame(maxWidth: .infinity, minHeight: 0)
             }
