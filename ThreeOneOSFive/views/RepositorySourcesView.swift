@@ -13,10 +13,13 @@ struct RepositorySourcesView: View {
 
     var body: some View {
         NavigationStack {
-            List {
+            ZStack {
+                ParticleFieldBackground()
+                List {
                 if store.sources.isEmpty {
                     Section {
                         emptyState
+                            .listRowBackground(Color.clear)
                     }
                 } else {
                     Section {
@@ -39,11 +42,15 @@ struct RepositorySourcesView: View {
                             .contextMenu {
                                 sourceActions(source)
                             }
+                            .listRowBackground(Color.white.opacity(0.035))
                         }
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+                }
+                .scrollContentBackground(.hidden)
+                .listStyle(.insetGrouped)
+            }
             .navigationTitle(language.text("repository.sources"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -87,7 +94,7 @@ struct RepositorySourcesView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             Image(systemName: "shippingbox.and.arrow.backward")
                 .font(.system(size: AppTheme.emptyIconSize, weight: .light))
                 .foregroundStyle(AppTheme.accent)
@@ -100,11 +107,13 @@ struct RepositorySourcesView: View {
             Button(language.text("repository.add_source")) {
                 showAddSource = true
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.borderedProminent)
             .controlSize(.large)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 48)
+        .padding(.vertical, 42)
+        .padding(.horizontal, 20)
+        .liquidGlassCard(cornerRadius: 24, tint: AppTheme.accent, opacity: 0.12)
     }
 
     @ViewBuilder
@@ -228,8 +237,10 @@ private struct RepositorySourceDetailView: View {
     }
 
     var body: some View {
-        List {
-            sourceHeader
+        ZStack {
+            ParticleFieldBackground()
+            List {
+                sourceHeader
 
             if let source, store.state(for: source.id) == .loading {
                 Section {
@@ -246,8 +257,11 @@ private struct RepositorySourceDetailView: View {
             } else {
                 packageGroups
             }
+            }
+            .scrollContentBackground(.hidden)
+            .listStyle(.insetGrouped)
+            .listRowBackground(Color.white.opacity(0.035))
         }
-        .listStyle(.insetGrouped)
         .navigationTitle(
             repository?.name
                 ?? source?.manifestURL.host
@@ -397,16 +411,21 @@ private struct RepositoryTagPackagesView: View {
     let records: [RepositoryPackageRecord]
 
     var body: some View {
-        List(records) { record in
-            NavigationLink {
-                RepositoryPackageDetailView(record: record)
-            } label: {
-                RepositoryPackageRow(record: record)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
+        ZStack {
+            ParticleFieldBackground()
+            List(records) { record in
+                NavigationLink {
+                    RepositoryPackageDetailView(record: record)
+                } label: {
+                    RepositoryPackageRow(record: record)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .listRowBackground(Color.white.opacity(0.035))
             }
+            .scrollContentBackground(.hidden)
+            .listStyle(.insetGrouped)
         }
-        .listStyle(.insetGrouped)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -15,7 +15,6 @@ struct ThreeOneOSFiveApp: App {
     @StateObject private var keySession = IOSKeySession()
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
     @AppStorage(AppTheme.accentPaletteStorageKey) private var accentPalette = AppTheme.defaultAccentPalette
-    @AppStorage("externalSystem.darkMode") private var externalDarkMode = false
     @State private var showOnboarding = false
     @State private var showAttribution = false
     @State private var updateOffer: AppUpdateChecker.Offer?
@@ -41,6 +40,10 @@ struct ThreeOneOSFiveApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
+                if !keySession.isAuthenticated || showOnboarding {
+                    ParticleFieldBackground()
+                }
+
                 if keySession.isAuthenticated {
                     ContentView()
                         .environmentObject(appState)
@@ -120,7 +123,7 @@ struct ThreeOneOSFiveApp: App {
                 patchDraftCoordinator.presentImport(url)
             }
             .tint(AppTheme.accent)
-            .preferredColorScheme(externalDarkMode ? .dark : .light)
+            .preferredColorScheme(.dark)
         }
     }
 }
@@ -447,6 +450,7 @@ final class IOSKeySession: ObservableObject {
 }
 
 struct IOSKeyLoginView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject var session: IOSKeySession
     @State private var key = ""
     @State private var isKeyVisible = false
@@ -454,12 +458,7 @@ struct IOSKeyLoginView: View {
     @State private var clipboardHint: String? = nil
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
     private var language: AppLanguage { AppLanguage(rawValue: languageCode) ?? .english }
-    private struct DeltaColors {
-        static let ink = Color.primary
-        static let muted = Color.secondary
-        static let purple = Color.accentColor
-        static let line = Color.primary.opacity(0.12)
-    }
+    private let lavender = Color(red: 0.73, green: 0.63, blue: 0.98)
     private func checkClipboard() {
         guard let clip = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines),
               !clip.isEmpty, clip.count >= 8, clip.count <= 128 else { clipboardHint = nil; return }
@@ -470,71 +469,132 @@ struct IOSKeyLoginView: View {
     }
     var body: some View {
         ZStack {
-            Color(.systemBackground).ignoresSafeArea()
             ScrollView {
                 VStack(spacing: 0) {
-                    Spacer(minLength: 56)
-                    Text(language.text("brand.external_system"))
-                        .font(.system(size: 30, weight: .black, design: .rounded))
-                        .tracking(1.2).foregroundStyle(DeltaColors.ink).opacity(appeared ? 1 : 0)
-                    Text(language.text("login.subtitle"))
-                        .font(.system(size: 15, weight: .medium, design: .rounded))
-                        .foregroundStyle(DeltaColors.muted).multilineTextAlignment(.center)
-                        .padding(.top, 10).padding(.horizontal, 24).opacity(appeared ? 1 : 0)
-                    VStack(spacing: 16) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "key.fill").font(.system(size: 18, weight: .semibold)).foregroundStyle(DeltaColors.purple).frame(width: 22)
-                            Group {
-                                if isKeyVisible { TextField(language.text("login.key_placeholder"), text: $key) }
-                                else { SecureField(language.text("login.key_placeholder"), text: $key) }
-                            }
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
-                            .foregroundStyle(DeltaColors.ink.opacity(0.92)).tint(DeltaColors.purple)
-                            .textInputAutocapitalization(.never).autocorrectionDisabled()
-                            Button { isKeyVisible.toggle() } label: {
-                                Image(systemName: isKeyVisible ? "eye.slash.fill" : "eye.fill")
-                                    .font(.system(size: 17, weight: .semibold)).foregroundStyle(DeltaColors.ink.opacity(0.75)).frame(width: 28, height: 36)
-                            }
+                    Spacer(minLength: 44)
+                    VStack(spacing: 18) {
+                        ZStack {
+                            Circle()
+                                .fill(lavender.opacity(0.12))
+                                .frame(width: 116, height: 116)
+                                .overlay(Circle().stroke(lavender.opacity(0.26), lineWidth: 1))
+                            AppLogo(size: 72)
+                                .shadow(color: lavender.opacity(0.25), radius: 22, y: 6)
                         }
-                        .padding(.horizontal, 16).padding(.vertical, 14)
-                        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.primary.opacity(0.045)))
-                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(DeltaColors.line, lineWidth: 1))
+                        VStack(spacing: 8) {
+                            Text("PROXY IOS")
+                                .font(.largeTitle.weight(.black))
+                                .tracking(2.4)
+                                .foregroundStyle(.white)
+                                .multilineTextAlignment(.center)
+                                .minimumScaleFactor(0.75)
+                                .lineLimit(1)
+                            Text(language.text("login.subtitle"))
+                                .font(.body)
+                                .foregroundStyle(.white.opacity(0.67))
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .frame(maxWidth: 440)
+                    .padding(.horizontal, 28)
+                    .opacity(appeared ? 1 : 0)
+
+                    VStack(alignment: .leading, spacing: 18) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("ACCESS KEY")
+                                .font(.caption.weight(.bold))
+                                .tracking(1.3)
+                                .foregroundStyle(.white.opacity(0.68))
+                            HStack(spacing: 12) {
+                                Image(systemName: "key.fill")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundStyle(lavender)
+                                    .frame(width: 22)
+                                Group {
+                                    if isKeyVisible { TextField(language.text("login.key_placeholder"), text: $key) }
+                                    else { SecureField(language.text("login.key_placeholder"), text: $key) }
+                                }
+                                .font(.body.weight(.medium))
+                                .foregroundStyle(.white)
+                                .tint(lavender)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .accessibilityLabel(language.text("login.key_placeholder"))
+                                Button { isKeyVisible.toggle() } label: {
+                                    Image(systemName: isKeyVisible ? "eye.slash.fill" : "eye.fill")
+                                        .font(.system(size: 17, weight: .semibold))
+                                        .foregroundStyle(.white.opacity(0.72))
+                                        .frame(minWidth: 36, minHeight: 44)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(isKeyVisible ? "Hide key" : "Show key")
+                            }
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 56)
+                            .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).stroke(.white.opacity(0.15), lineWidth: 1))
+                        }
+
                         if let hint = clipboardHint {
                             Button { pasteFromClipboard() } label: {
-                                HStack(spacing: 8) {
+                                HStack(spacing: 9) {
                                     Image(systemName: "doc.on.clipboard").font(.system(size: 14, weight: .semibold))
-                                    Text("Colar chave do clipboard").font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    Text("Colar chave do clipboard").font(.subheadline.weight(.semibold))
                                     Spacer(minLength: 0)
-                                    Text(String(hint.prefix(10)) + "…").font(.system(size: 12, weight: .medium, design: .monospaced)).foregroundStyle(DeltaColors.muted)
+                                    Text(String(hint.prefix(10)) + "…").font(.caption.monospaced()).foregroundStyle(.white.opacity(0.55))
                                 }
-                                .foregroundStyle(DeltaColors.purple).padding(.horizontal, 14).padding(.vertical, 10)
-                                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(DeltaColors.purple.opacity(0.08))
-                                )
-                            }.buttonStyle(.plain)
+                                .foregroundStyle(lavender)
+                                .padding(.horizontal, 13)
+                                .frame(minHeight: 44)
+                                .background(lavender.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            }
+                            .buttonStyle(.plain)
                         }
+
                         Button { session.submit(key) } label: {
-                            HStack(spacing: 8) {
-                                if session.isChecking { ProgressView().tint(.white) }
-                                Text(session.isChecking ? "Verificando…" : "Entrar").font(.system(size: 17, weight: .bold, design: .rounded))
-                            }.frame(maxWidth: .infinity).padding(.vertical, 15)
+                            HStack(spacing: 9) {
+                                if session.isChecking { ProgressView().tint(.black) }
+                                Text(session.isChecking ? "Verificando…" : "Entrar")
+                                    .font(.headline.weight(.bold))
+                            }
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity, minHeight: 54)
+                            .background(
+                                LinearGradient(colors: [Color(red: 0.83, green: 0.76, blue: 1), lavender], startPoint: .topLeading, endPoint: .bottomTrailing),
+                                in: RoundedRectangle(cornerRadius: 15, style: .continuous)
+                            )
+                            .shadow(color: lavender.opacity(0.2), radius: 16, y: 6)
                         }
-                        .buttonStyle(.borderedProminent).controlSize(.large)
+                        .buttonStyle(.plain)
                         .disabled(session.isChecking || key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .opacity(session.isChecking || key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.62 : 1)
+
                         if let error = session.errorMessage {
                             Label(error, systemImage: "exclamationmark.triangle.fill")
-                                .font(.system(size: 13, weight: .medium, design: .rounded))
-                                .foregroundStyle(.red.opacity(0.9)).multilineTextAlignment(.center).padding(.horizontal, 8)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(Color(red: 1, green: 0.53, blue: 0.58))
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, 6)
+                                .accessibilityAddTraits(.updatesFrequently)
                         }
                     }
                     .padding(22)
-                    .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(DeltaColors.purple.opacity(0.05)))
-                    .padding(.top, 36).padding(.horizontal, 24).opacity(appeared ? 1 : 0)
-                    Spacer(minLength: 48)
-                }.frame(maxWidth: .infinity)
+                    .frame(maxWidth: 440)
+                    .background(Color(red: 0.055, green: 0.05, blue: 0.075).opacity(0.82), in: RoundedRectangle(cornerRadius: 25, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 25, style: .continuous).stroke(.white.opacity(0.13), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.30), radius: 28, y: 14)
+                    .padding(.top, 32)
+                    .padding(.horizontal, 22)
+                    .opacity(appeared ? 1 : 0)
+                    Spacer(minLength: 34)
+                }
+                .frame(maxWidth: .infinity, minHeight: 0)
             }
         }
         .onAppear {
-            withAnimation(.spring(response: 0.55, dampingFraction: 0.84)) { appeared = true }
+            withAnimation(reduceMotion ? nil : .spring(response: 0.55, dampingFraction: 0.84)) { appeared = true }
             checkClipboard()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in checkClipboard() }

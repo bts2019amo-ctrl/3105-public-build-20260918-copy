@@ -45,8 +45,13 @@ struct FilesTabStrip: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
         }
-        .background(.bar)
-        .overlay(alignment: .bottom) { Divider() }
+        .background {
+            ZStack {
+                ParticleFieldBackground()
+                Color.black.opacity(0.38)
+            }
+        }
+        .overlay(alignment: .bottom) { Rectangle().fill(.white.opacity(0.08)).frame(height: 0.5) }
         .alert(
             language.text("browser.rename_tab"),
             isPresented: renamePresentation
@@ -94,10 +99,15 @@ struct FilesTabStrip: View {
             .accessibilityLabel(language.text("browser.close_tab"))
         }
         .foregroundStyle(isSelected ? AppTheme.accent : Color.secondary)
+        .padding(.horizontal, 2)
         .background(
-            isSelected ? AppTheme.accent.opacity(0.12) : Color.secondary.opacity(0.08),
-            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+            isSelected ? AppTheme.accent.opacity(0.16) : Color.white.opacity(0.055),
+            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
         )
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(isSelected ? AppTheme.accent.opacity(0.38) : .white.opacity(0.08), lineWidth: 0.7)
+        }
         .contextMenu {
             Button {
                 beginRename(tab)

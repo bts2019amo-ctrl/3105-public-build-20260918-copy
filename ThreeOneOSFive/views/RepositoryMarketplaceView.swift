@@ -22,7 +22,9 @@ struct LegacyRepositoryExploreView: View {
 
     var body: some View {
         NavigationStack {
-            List {
+            ZStack {
+                ParticleFieldBackground()
+                List {
                 builtInToolsSection
 
                 if repositoryStore.packages.isEmpty {
@@ -42,7 +44,11 @@ struct LegacyRepositoryExploreView: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+                }
+                .scrollContentBackground(.hidden)
+                .listStyle(.insetGrouped)
+                .listRowBackground(Color.white.opacity(0.035))
+            }
             .navigationTitle(language.text("repository.explore"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -189,7 +195,9 @@ struct LegacyRepositorySourcesView: View {
 
     var body: some View {
         NavigationStack {
-            List {
+            ZStack {
+                ParticleFieldBackground()
+                List {
                 if store.sources.isEmpty {
                     Section {
                         VStack(spacing: 12) {
@@ -231,7 +239,11 @@ struct LegacyRepositorySourcesView: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+                }
+                .scrollContentBackground(.hidden)
+                .listStyle(.insetGrouped)
+                .listRowBackground(Color.white.opacity(0.035))
+            }
             .navigationTitle(language.text("repository.sources"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -389,7 +401,7 @@ struct RepositoryPackageDetailView: View {
                 .padding(.bottom, 32)
             }
             .scrollIndicators(.hidden)
-            .background(Color(uiColor: .systemGroupedBackground))
+            .background(ParticleFieldBackground())
             .onAppear {
                 scrollToInformationIfNeeded(using: proxy)
             }
@@ -458,16 +470,7 @@ struct RepositoryPackageDetailView: View {
             installButton
         }
         .padding(18)
-        .background(
-            Color(uiColor: .systemBackground),
-            in: RoundedRectangle(
-                cornerRadius: AppTheme.contentCardCornerRadius,
-                style: .continuous
-            )
-        )
-        .overlay {
-            AppCardBorder()
-        }
+        .liquidGlassCard(cornerRadius: AppTheme.contentCardCornerRadius, tint: AppTheme.accent, opacity: 0.14)
     }
 
     private var packageIdentity: some View {
@@ -623,7 +626,7 @@ struct RepositoryPackageDetailView: View {
         RepositoryRemoteImage(url: url, cornerRadius: 0)
             .frame(maxWidth: .infinity)
             .aspectRatio(16 / 7, contentMode: .fit)
-            .background(Color(uiColor: .secondarySystemBackground))
+            .background(Color.white.opacity(0.055))
             .clipShape(
                 RoundedRectangle(
                     cornerRadius: AppTheme.contentCardCornerRadius,
@@ -645,16 +648,7 @@ struct RepositoryPackageDetailView: View {
             content()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(AppTheme.contentCardPadding)
-                .background(
-                    Color(uiColor: .systemBackground),
-                    in: RoundedRectangle(
-                        cornerRadius: AppTheme.contentCardCornerRadius,
-                        style: .continuous
-                    )
-                )
-                .overlay {
-                    AppCardBorder()
-                }
+                .liquidGlassCard(cornerRadius: AppTheme.contentCardCornerRadius, tint: AppTheme.accent, opacity: 0.10)
         }
     }
 
@@ -772,7 +766,7 @@ struct RepositoryPackageDetailView: View {
             .lineLimit(1)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(Color(uiColor: .secondarySystemFill), in: Capsule())
+            .background(Color.white.opacity(0.08), in: Capsule())
     }
 }
 
@@ -981,12 +975,15 @@ struct AddRepositorySourceView: View {
                     .textContentType(.URL)
                     .submitLabel(.done)
                     .onSubmit(add)
+                    .listRowBackground(Color.white.opacity(0.045))
                 } header: {
                     Text(language.text("repository.source_url"))
                 } footer: {
                     Text(language.text("repository.source_url_footer"))
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(ParticleFieldBackground())
             .navigationTitle(language.text("repository.add_source"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

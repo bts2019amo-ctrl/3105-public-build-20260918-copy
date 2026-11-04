@@ -47,6 +47,34 @@ struct PatchProjectEditorView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    HStack(spacing: 14) {
+                        Image(systemName: existingProject == nil ? "doc.badge.plus" : "shippingbox.fill")
+                            .font(.system(size: 23, weight: .semibold))
+                            .foregroundStyle(AppTheme.accent)
+                            .frame(width: 54, height: 54)
+                            .background(AppTheme.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(existingProject?.name ?? language.text("patch.project"))
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(.white)
+                                .lineLimit(2)
+                            Text(language.text("patch.captured_content"))
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.white.opacity(0.62))
+                            if existingProject != nil {
+                                Text("\(rules.count) · \(directories.count)")
+                                    .font(.caption2.monospaced().weight(.semibold))
+                                    .foregroundStyle(AppTheme.accent)
+                            }
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.vertical, 7)
+                    .listRowBackground(Color(red: 0.075, green: 0.07, blue: 0.10).opacity(0.86))
+                }
+
                 Section(language.text("patch.project")) {
                     TextField(language.text("patch.project_name"), text: $name)
                         .textInputAutocapitalization(.words)
@@ -159,6 +187,12 @@ struct PatchProjectEditorView: View {
             }
             .navigationTitle(language.text("patch.edit"))
             .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background { ParticleFieldBackground() }
+            .listRowBackground(Color(red: 0.065, green: 0.065, blue: 0.085).opacity(0.84))
+            .listRowSeparatorTint(Color.white.opacity(0.10))
+            .tint(AppTheme.accent)
+            .preferredColorScheme(.dark)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(language.text("common.cancel")) { dismiss() }
@@ -304,6 +338,20 @@ struct PatchRuleEditorView: View {
         NavigationStack {
             Form {
                 Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label(language.text("patch.destination"), systemImage: "arrow.triangle.branch")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.white)
+                        Text(language.text("patch.bundle_not_uuid_footer"))
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.62))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 5)
+                    .listRowBackground(Color(red: 0.075, green: 0.07, blue: 0.10).opacity(0.86))
+                }
+
+                Section {
                     TextField("com.example.app", text: $bundleID)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -373,6 +421,12 @@ struct PatchRuleEditorView: View {
             }
             .navigationTitle(language.text(originalRule == nil ? "patch.add_rule" : "patch.edit_rule"))
             .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background { ParticleFieldBackground() }
+            .listRowBackground(Color(red: 0.065, green: 0.065, blue: 0.085).opacity(0.84))
+            .listRowSeparatorTint(Color.white.opacity(0.10))
+            .tint(AppTheme.accent)
+            .preferredColorScheme(.dark)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(language.text("common.cancel")) { dismiss() }

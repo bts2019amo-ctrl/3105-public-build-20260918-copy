@@ -116,17 +116,21 @@ struct AppDataBrowserView: View {
     }
 
     private var appList: some View {
-        VStack(spacing: 0) {
-            if horizontalSizeClass == .regular {
-                FilesTabStrip(session: $tabSession)
+        ZStack {
+            ParticleFieldBackground()
+            VStack(spacing: 0) {
+                if horizontalSizeClass == .regular {
+                    FilesTabStrip(session: $tabSession)
+                }
+                AppSearchField(
+                    text: $searchText,
+                    prompt: language.text("browser.search"),
+                    clearLabel: language.text("common.clear")
+                )
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                appRows
             }
-            AppSearchField(
-                text: $searchText,
-                prompt: language.text("browser.search"),
-                clearLabel: language.text("common.clear")
-            )
-            Divider()
-            appRows
         }
     }
 
@@ -150,9 +154,15 @@ struct AppDataBrowserView: View {
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
+                            Spacer(minLength: 0)
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(AppTheme.accent)
                         }
-                        .padding(.vertical, 2)
+                        .padding(12)
+                        .liquidGlassCard(cornerRadius: 14, tint: AppTheme.accent, opacity: 0.09)
                     }
+                    .listRowBackground(Color.clear)
                     .contextMenu {
                         openInNewTabButton(workspaceDestination)
                     }
@@ -162,6 +172,7 @@ struct AppDataBrowserView: View {
                 ForEach(filteredApps) { app in
                     if app.containerPath.isEmpty {
                         appRow(app)
+                            .listRowBackground(Color.clear)
                     } else {
                         let appDestination = FileBrowserDestination(
                             containerPath: app.containerPath,
@@ -172,6 +183,7 @@ struct AppDataBrowserView: View {
                         NavigationLink(value: appDestination) {
                             appRow(app)
                         }
+                        .listRowBackground(Color.clear)
                         .contextMenu {
                             openInNewTabButton(appDestination)
                         }
@@ -193,6 +205,8 @@ struct AppDataBrowserView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(Color.clear)
         .environment(\.defaultMinListRowHeight, 48)
         .scrollDismissesKeyboard(.interactively)
         .overlay {
@@ -215,7 +229,7 @@ struct AppDataBrowserView: View {
     }
 
     private func appRow(_ app: InstalledApp) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             BrowserAppIcon(app: app)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -235,10 +249,15 @@ struct AppDataBrowserView: View {
                 Text(app.version)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.white.opacity(0.06), in: Capsule())
             }
         }
-        .padding(.vertical, 2)
-        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 12))
+        .padding(11)
+        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .liquidGlassCard(cornerRadius: 14, tint: AppTheme.accent, opacity: 0.07)
+        .listRowInsets(EdgeInsets(top: 5, leading: 14, bottom: 5, trailing: 14))
     }
 
     private func openInNewTabButton(_ destination: FileBrowserDestination) -> some View {
@@ -253,23 +272,25 @@ struct AppDataBrowserView: View {
         VStack(spacing: 16) {
             Image(systemName: "folder.badge.questionmark")
                 .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.accent)
             Text(errorMessage ?? language.text("browser.empty"))
-                .font(.subheadline)
+                .font(.headline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding()
             Button(language.text("browser.retry")) { reload() }
                 .buttonStyle(.borderedProminent)
         }
-        .padding()
+        .padding(24)
+        .liquidGlassCard(cornerRadius: 22, tint: AppTheme.accent, opacity: 0.08)
+        .padding(28)
     }
 
     private var searchEmptyView: some View {
         VStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.accent)
             Text(language.text("browser.search_empty"))
                 .font(.subheadline.weight(.medium))
             Text(language.text("browser.search_apps_empty_message"))
@@ -278,7 +299,9 @@ struct AppDataBrowserView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+        .padding(24)
+        .liquidGlassCard(cornerRadius: 22, tint: AppTheme.accent, opacity: 0.07)
+        .padding(28)
     }
 
     private func reload() {

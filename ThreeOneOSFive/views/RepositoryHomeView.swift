@@ -11,23 +11,25 @@ struct RepositoryHomeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 28) {
-                    if feed.isEmpty {
-                        emptyContent
-                    } else {
-                        featuredFeed
-                        recentPackages
+            ZStack {
+                ParticleFieldBackground()
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 28) {
+                        if feed.isEmpty {
+                            emptyContent
+                        } else {
+                            featuredFeed
+                            recentPackages
+                        }
                     }
-
+                    .frame(maxWidth: 720)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, AppTheme.contentCardInset)
+                    .padding(.top, 20)
+                    .padding(.bottom, 36)
                 }
-                .frame(maxWidth: 720)
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, AppTheme.contentCardInset)
-                .padding(.top, 16)
-                .padding(.bottom, 32)
+                .scrollIndicators(.hidden)
             }
-            .background(Color(uiColor: .systemGroupedBackground))
             .refreshable {
                 await store.refreshAllAndWait()
                 rebuildFeed()
@@ -129,25 +131,17 @@ struct RepositoryHomeView: View {
                         }
                     }
                 }
-                .background(
-                    Color(uiColor: .systemBackground),
-                    in: RoundedRectangle(
-                        cornerRadius: AppTheme.contentCardCornerRadius,
-                        style: .continuous
-                    )
-                )
-                .overlay {
-                    AppCardBorder()
-                }
+                .liquidGlassCard(cornerRadius: AppTheme.contentCardCornerRadius, tint: AppTheme.accent, opacity: 0.11)
             }
         }
     }
 
     private func sectionHeader(_ key: String) -> some View {
         Text(language.text(key))
-            .font(.title3.weight(.bold))
+            .font(.title3.weight(.black))
             .foregroundStyle(.primary)
-            .textCase(nil)
+            .tracking(0.7)
+            .textCase(.uppercase)
     }
 
     private func marketplaceEmpty(
@@ -169,16 +163,7 @@ struct RepositoryHomeView: View {
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 20)
         .padding(.vertical, 48)
-        .background(
-            Color(uiColor: .systemBackground),
-            in: RoundedRectangle(
-                cornerRadius: AppTheme.contentCardCornerRadius,
-                style: .continuous
-            )
-        )
-        .overlay {
-            AppCardBorder()
-        }
+        .liquidGlassCard(cornerRadius: AppTheme.contentCardCornerRadius, tint: AppTheme.accent, opacity: 0.12)
     }
 
     private func rebuildFeed() {
@@ -230,10 +215,13 @@ struct RepositoryNewView: View {
 
     var body: some View {
         NavigationStack {
-            List {
+            ZStack {
+                ParticleFieldBackground()
+                List {
                 if packages.isEmpty {
                     Section {
                         emptyState
+                            .listRowBackground(Color.white.opacity(0.035))
                     }
                 } else {
                     Section {
@@ -241,11 +229,15 @@ struct RepositoryNewView: View {
                             NavigationLink(value: record) {
                                 RepositoryNewPackageRow(record: record)
                             }
+                            .listRowBackground(Color.white.opacity(0.035))
                         }
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+                }
+                .scrollContentBackground(.hidden)
+                .listStyle(.insetGrouped)
+            }
             .navigationTitle(language.text("tab.new"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -368,7 +360,12 @@ struct RepositorySearchView: View {
                     prompt: language.text("repository.search_prompt"),
                     clearLabel: language.text("common.clear")
                 )
-                Divider()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(.white.opacity(0.11), lineWidth: 0.7))
+                .padding(.horizontal, AppTheme.contentCardInset)
+                .padding(.top, 14)
                 List {
                     if query.isEmpty {
                         searchPrompt
@@ -390,11 +387,14 @@ struct RepositorySearchView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden)
+                .listRowBackground(Color.white.opacity(0.035))
                 .scrollDismissesKeyboard(.interactively)
                 .refreshable {
                     await store.refreshAllAndWait()
                 }
             }
+            .background(ParticleFieldBackground())
             .navigationTitle(language.text("repository.search"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -427,6 +427,9 @@ struct RepositorySearchView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 64)
+        .padding(.horizontal, 20)
+        .liquidGlassCard(cornerRadius: 22, tint: AppTheme.accent, opacity: 0.10)
+        .listRowBackground(Color.clear)
     }
 
     private var searchEmpty: some View {
@@ -443,6 +446,9 @@ struct RepositorySearchView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 64)
+        .padding(.horizontal, 20)
+        .liquidGlassCard(cornerRadius: 22, tint: AppTheme.accent, opacity: 0.08)
+        .listRowBackground(Color.clear)
     }
 }
 

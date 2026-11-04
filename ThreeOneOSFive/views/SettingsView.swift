@@ -6,48 +6,29 @@ struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var patchStore: PatchProjectStore
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
-    @AppStorage(AppTheme.accentPaletteStorageKey)
-    private var accentPalette = AppTheme.defaultAccentPalette
-    @AppStorage(AppTheme.glassOpacityStorageKey)
-    private var glassOpacity = AppTheme.defaultGlassOpacity
-    @AppStorage(AppTheme.wallpaperBlurStorageKey)
-    private var wallpaperBlur = AppTheme.defaultWallpaperBlur
-    @AppStorage(AppTheme.animationSpeedStorageKey)
-    private var animationSpeed = AppTheme.defaultAnimationSpeed
-    @AppStorage(AppTheme.saturationStorageKey)
-    private var saturation = AppTheme.defaultSaturation
-
-    private var selectedPalette: AppAccentPalette {
-        AppAccentPalette(rawValue: accentPalette) ?? .orange
-    }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                LinearGradient(
-                    colors: [
-                        AppTheme.accent.opacity(0.16),
-                        Color(uiColor: .systemBackground).opacity(0.92),
-                        AppTheme.accent.opacity(0.06)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                ParticleFieldBackground()
 
                 ScrollView {
-                    VStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 18) {
                         profileCard
+                        sectionLabel(language.text("patch.sync.title"))
                         remoteSyncCard
                         withdrawnRemoteRecoveryCard
+                        sectionLabel(language.text("settings.language"))
                         languageCard
-                        paletteCard
-                        appearanceEditorCard
+                        sectionLabel(language.text("common.device"))
                         deviceCard
                         supportCard
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 20)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 18)
+                    .padding(.bottom, 30)
+                    .frame(maxWidth: 620)
+                    .frame(maxWidth: .infinity)
                 }
                 .scrollIndicators(.hidden)
             }
@@ -57,110 +38,151 @@ struct SettingsView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(language.text("common.done")) { dismiss() }
                         .fontWeight(.semibold)
+                        .foregroundStyle(AppTheme.accent)
                 }
             }
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .preferredColorScheme(.dark)
         }
         .tint(AppTheme.accent)
     }
 
     private var profileCard: some View {
-        HStack(spacing: 14) {
-            AppLogo(size: 54)
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 16) {
+            AppLogo(size: 56)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 6) {
                 Text("EXTERNAL SYSTEM")
                     .font(.title3.weight(.bold))
+                    .tracking(0.8)
+                    .foregroundStyle(.white)
                 Text(language.text("common.version", appVersion))
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Text(language.text(appState.isSupported ? "settings.supported" : "settings.unsupported"))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(appState.isSupported ? .green : .red)
+                    .foregroundStyle(.white.opacity(0.67))
+                HStack(spacing: 7) {
+                    Circle()
+                        .fill(appState.isSupported ? Color.green : Color.red)
+                        .frame(width: 7, height: 7)
+                    Text(language.text(appState.isSupported ? "settings.supported" : "settings.unsupported"))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(appState.isSupported ? Color.green : Color.red)
+                }
+                .padding(.top, 2)
             }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .foregroundStyle(.tertiary)
+            Spacer(minLength: 0)
         }
         .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .glassCard()
+        .accessibilityElement(children: .combine)
     }
 
     private var remoteSyncCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            settingsCardHeader("patch.sync.title", systemImage: "arrow.triangle.2.circlepath")
-            HStack(spacing: 10) {
-                Circle()
-                    .fill(syncColor)
-                    .frame(width: 9, height: 9)
-                VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 15) {
+            HStack(alignment: .center, spacing: 12) {
+                settingsIcon("arrow.triangle.2.circlepath")
+                VStack(alignment: .leading, spacing: 4) {
                     Text(syncTitle)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.headline)
+                        .foregroundStyle(.white)
                     if let lastSync = patchStore.lastRemoteSyncAt {
                         Text(lastSync, style: .time)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.white.opacity(0.58))
                     }
                 }
-                Spacer()
-                Button { patchStore.syncNow() } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.headline.weight(.semibold))
-                        .padding(10)
-                        .background(AppTheme.accent.opacity(0.14), in: Circle())
-                }
-                .buttonStyle(.plain)
-                .disabled(patchStore.remoteSyncState == .syncing)
+                Spacer(minLength: 8)
+                Circle()
+                    .fill(syncColor)
+                    .frame(width: 9, height: 9)
+                    .shadow(color: syncColor.opacity(0.6), radius: 7)
+                    .accessibilityHidden(true)
             }
+
+            Button { patchStore.syncNow() } label: {
+                HStack(spacing: 9) {
+                    Image(systemName: "arrow.clockwise")
+                    Text(language.text("patch.sync.title"))
+                    Spacer()
+                    if patchStore.remoteSyncState == .syncing {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: "arrow.up.right")
+                            .font(.caption.weight(.bold))
+                    }
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(AppTheme.accent.opacity(0.19), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(AppTheme.accent.opacity(0.30), lineWidth: 0.8)
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(patchStore.remoteSyncState == .syncing)
+            .accessibilityHint(patchStore.remoteSyncState == .syncing ? language.text("patch.sync.syncing") : "")
+
             if let error = patchStore.lastRemoteSyncError {
-                Text(error)
+                Label(error, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.orange.opacity(0.95))
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(18)
+        .padding(17)
         .glassCard()
     }
 
     @ViewBuilder
     private var withdrawnRemoteRecoveryCard: some View {
         if !patchStore.withdrawnRemoteItems.isEmpty || patchStore.withdrawnRestoreError != nil {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 13) {
                 Label("Recuperação de patches", systemImage: "arrow.uturn.backward.circle.fill")
                     .font(.headline)
                     .foregroundStyle(AppTheme.accent)
                 Text("Estes patches foram retirados do catálogo e não aparecem mais na lista. Restaure os arquivos originais antes de remover uma cópia que ainda esteja aplicada; se já foi restaurada, a cópia local pode ser removida.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.68))
                     .fixedSize(horizontal: false, vertical: true)
 
                 ForEach(patchStore.withdrawnRemoteItems) { item in
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 11) {
                         Text(PatchProjectLibrary.displayName(for: item).isEmpty
                              ? (item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent)
                              : PatchProjectLibrary.displayName(for: item))
                             .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .fixedSize(horizontal: false, vertical: true)
                         Button {
                             patchStore.restoreWithdrawnRemotePackage(item)
                         } label: {
                             Label("Restaurar se aplicado e remover cópia local", systemImage: "arrow.uturn.backward")
                                 .font(.subheadline.weight(.semibold))
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(12)
+                                .background(AppTheme.accent.opacity(0.16), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                         .buttonStyle(.plain)
                         .disabled(patchStore.isBusy)
                     }
-                    .padding(12)
-                    .background(AppTheme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .padding(13)
+                    .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
                 }
 
                 if let error = patchStore.withdrawnRestoreError {
-                    Text(error)
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color.red.opacity(0.95))
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(18)
+            .padding(17)
             .glassCard()
         }
     }
@@ -180,15 +202,20 @@ struct SettingsView: View {
     private var syncColor: Color {
         switch patchStore.remoteSyncState {
         case .online: return .green
-        case .syncing: return .orange
+        case .syncing: return AppTheme.accent
         case .offline: return .red
-        case .idle: return .secondary
+        case .idle: return .gray
         }
     }
 
     private var languageCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            settingsCardHeader("settings.language", systemImage: "globe")
+        VStack(alignment: .leading, spacing: 13) {
+            HStack(spacing: 11) {
+                settingsIcon("globe")
+                Text(language.text("settings.language"))
+                    .font(.headline)
+                    .foregroundStyle(.white)
+            }
             Picker(language.text("settings.language"), selection: $languageCode) {
                 ForEach(AppLanguage.allCases) { option in
                     Text(option.displayName).tag(option.rawValue)
@@ -196,110 +223,36 @@ struct SettingsView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            .tint(AppTheme.accent)
         }
-        .padding(18)
+        .padding(17)
         .glassCard()
-    }
-
-    private var paletteCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            settingsCardHeader("settings.palette", systemImage: "paintpalette.fill")
-            Text(language.text("settings.palette_footer"))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 12)], spacing: 12) {
-                ForEach(AppAccentPalette.allCases) { palette in
-                    Button {
-                        accentPalette = palette.rawValue
-                    } label: {
-                        VStack(spacing: 7) {
-                            Circle()
-                                .fill(palette.color)
-                                .frame(width: 38, height: 38)
-                                .overlay {
-                                    if palette == selectedPalette {
-                                        Circle().stroke(.white, lineWidth: 3)
-                                        Image(systemName: "checkmark")
-                                            .font(.caption.weight(.bold))
-                                            .foregroundStyle(.white)
-                                    }
-                                }
-                                .shadow(color: palette.color.opacity(0.32), radius: 8)
-                            Text(language.text("settings.palette." + palette.rawValue))
-                                .font(.caption.weight(.medium))
-                                .foregroundStyle(.primary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(
-                            palette.color.opacity(palette == selectedPalette ? 0.16 : 0.06),
-                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .padding(18)
-        .glassCard()
-    }
-
-    private var appearanceEditorCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            settingsCardHeader("settings.advanced_appearance", systemImage: "wand.and.stars")
-            appearanceSlider("settings.glass_transparency", value: $glassOpacity, range: 0.05...0.30, format: "%.0f%%")
-            appearanceSlider("settings.background_blur", value: $wallpaperBlur, range: 8...46, format: "%.0f")
-            appearanceSlider("settings.animation_speed", value: $animationSpeed, range: 0.4...2.0, format: "%.1fx")
-            appearanceSlider("settings.saturation", value: $saturation, range: 0.6...1.8, format: "%.1f")
-            Button(language.text("settings.restore_appearance")) {
-                glassOpacity = AppTheme.defaultGlassOpacity
-                wallpaperBlur = AppTheme.defaultWallpaperBlur
-                animationSpeed = AppTheme.defaultAnimationSpeed
-                saturation = AppTheme.defaultSaturation
-            }
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(AppTheme.accent)
-        }
-        .padding(18)
-        .glassCard()
-    }
-
-    private func appearanceSlider(
-        _ title: String,
-        value: Binding<Double>,
-        range: ClosedRange<Double>,
-        format: String
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(language.text(title)).font(.subheadline)
-                Spacer()
-                Text(String(format: format, value.wrappedValue))
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-            Slider(value: value, in: range)
-                .tint(AppTheme.accent)
-        }
     }
 
     private var deviceCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            settingsCardHeader("common.device", systemImage: "iphone")
+        VStack(alignment: .leading, spacing: 14) {
             settingValue(language.text("dashboard.hardware_model"), AppInfo.displayMachineName)
             settingValue(language.text("settings.ios_version"), "\(AppInfo.osVersion) (\(AppInfo.osBuild))")
         }
-        .padding(18)
+        .padding(17)
         .glassCard()
     }
 
     private var supportCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            settingsCardHeader("settings.verified_versions", systemImage: "checkmark.seal.fill")
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 11) {
+                settingsIcon("checkmark.seal.fill")
+                Text(language.text("settings.verified_versions"))
+                    .font(.headline)
+                    .foregroundStyle(.white)
+            }
             settingValue(
                 language.text("settings.current_version"),
                 language.text(appState.isSupported ? "settings.supported" : "settings.unsupported")
             )
+            Rectangle()
+                .fill(Color.white.opacity(0.1))
+                .frame(height: 1)
             versionLine("iOS 17", ExploitSupportPolicy.verifiedIOS17Range)
             versionLine("iOS 18", ExploitSupportPolicy.verifiedIOS18Range)
             versionLine("iOS 26", ExploitSupportPolicy.verifiedIOS26Range)
@@ -307,36 +260,54 @@ struct SettingsView: View {
                 versionLine("iOS 27", versionLabel(version))
             }
         }
-        .padding(18)
+        .padding(17)
         .glassCard()
     }
 
-    private func settingsCardHeader(_ key: String, systemImage: String) -> some View {
-        Label(language.text(key), systemImage: systemImage)
-            .font(.headline)
+    private func sectionLabel(_ title: String) -> some View {
+        Text(title.uppercased())
+            .font(.caption.weight(.bold))
+            .tracking(1.3)
+            .foregroundStyle(.white.opacity(0.53))
+            .padding(.leading, 4)
+            .padding(.top, 2)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    private func settingsIcon(_ systemName: String) -> some View {
+        Image(systemName: systemName)
+            .font(.system(size: 15, weight: .semibold))
             .foregroundStyle(AppTheme.accent)
+            .frame(width: 38, height: 38)
+            .background(AppTheme.accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .accessibilityHidden(true)
     }
 
     private func settingValue(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label).foregroundStyle(.secondary)
-            Spacer(minLength: 12)
+        HStack(alignment: .firstTextBaseline, spacing: 16) {
+            Text(label)
+                .foregroundStyle(.white.opacity(0.62))
+            Spacer(minLength: 8)
             Text(value)
                 .multilineTextAlignment(.trailing)
-                .foregroundStyle(.primary)
+                .foregroundStyle(.white)
         }
         .font(.subheadline)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private func versionLine(_ label: String, _ value: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(label).font(.subheadline.weight(.semibold))
-            Spacer(minLength: 12)
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(label)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.86))
+            Spacer(minLength: 8)
             Text(value)
                 .font(.caption.monospaced())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.61))
                 .multilineTextAlignment(.trailing)
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var appVersion: String {
@@ -362,11 +333,21 @@ struct SettingsView: View {
 
 private extension View {
     func glassCard() -> some View {
-        background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(.white.opacity(0.20), lineWidth: 0.8)
-            }
-            .shadow(color: .black.opacity(0.08), radius: 18, y: 8)
+        background(
+            Color(red: 0.055, green: 0.052, blue: 0.075).opacity(0.82),
+            in: RoundedRectangle(cornerRadius: 22, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(
+                    LinearGradient(
+                        colors: [.white.opacity(0.19), AppTheme.accent.opacity(0.10), .white.opacity(0.035)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.8
+                )
+        }
+        .shadow(color: .black.opacity(0.27), radius: 16, y: 8)
     }
 }

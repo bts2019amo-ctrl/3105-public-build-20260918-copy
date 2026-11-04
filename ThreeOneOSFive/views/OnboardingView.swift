@@ -26,9 +26,6 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            AppTheme.pageBackground
-                .ignoresSafeArea()
-
             VStack(spacing: 0) {
                 header
                 pageContent
@@ -41,29 +38,44 @@ struct OnboardingView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("PROXY IOS")
+                        .font(.headline.weight(.black))
+                        .tracking(1.8)
+                        .foregroundStyle(.white)
+                    Text(language.text("onboarding.step", "\(step.rawValue + 1)", "\(OnboardingStep.allCases.count)"))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.62))
+                }
+                Spacer()
+                Text("0\(step.rawValue + 1)")
+                    .font(.system(.title3, design: .rounded).weight(.bold))
+                    .monospacedDigit()
+                    .foregroundStyle(AppTheme.accent)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(AppTheme.accent.opacity(0.12), in: Capsule())
+                    .accessibilityHidden(true)
+            }
             HStack(spacing: 6) {
                 ForEach(OnboardingStep.allCases, id: \.rawValue) { s in
                     Capsule()
-                        .fill(s.rawValue <= step.rawValue ? AppTheme.accent : Color.secondary.opacity(0.22))
-                        .frame(height: 4)
-                        .frame(maxWidth: s == step ? 28 : 18)
+                        .fill(s.rawValue <= step.rawValue ? AppTheme.accent : Color.white.opacity(0.14))
+                        .frame(height: s == step ? 5 : 3)
+                        .frame(maxWidth: .infinity)
                         .animation(motionAnimation, value: step)
                         .accessibilityHidden(true)
                 }
             }
-            .frame(maxWidth: 560)
-            .padding(.horizontal, 20)
-
-            Text(language.text("onboarding.step", "\(step.rawValue + 1)", "\(OnboardingStep.allCases.count)"))
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
-                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
-        .padding(.top, 16)
-        .padding(.bottom, 8)
-        .frame(maxWidth: .infinity)
-        .background(AppTheme.pageBackground)
+        .frame(maxWidth: 560)
+        .padding(.horizontal, 22)
+        .padding(.top, 12)
+        .padding(.bottom, 14)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .background(Color.black.opacity(0.24))
     }
 
     @ViewBuilder
@@ -110,21 +122,27 @@ struct OnboardingView: View {
 
     private var languagePage: some View {
         VStack(spacing: 24) {
-            AppLogo(size: 72)
+            ZStack {
+                Circle().fill(AppTheme.accent.opacity(0.12)).frame(width: 102, height: 102)
+                AppLogo(size: 68)
+                    .shadow(color: AppTheme.accent.opacity(0.25), radius: 18, y: 5)
+            }
 
             VStack(spacing: 8) {
                 Text(language.text("onboarding.language_title"))
-                    .font(.title2.weight(.bold))
+                    .font(.title2.weight(.black))
+                    .textCase(.uppercase)
                     .multilineTextAlignment(.center)
+                    .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(language.text("onboarding.language_subtitle"))
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.66))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            VStack(spacing: 12) {
+            VStack(spacing: 10) {
                 ForEach(AppLanguage.allCases) { option in
                     let isSelected = languageCode == option.rawValue
                     Button {
@@ -133,7 +151,7 @@ struct OnboardingView: View {
                         HStack(spacing: 12) {
                             Text(option.displayName)
                                 .font(.body.weight(.semibold))
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(.white)
                                 .fixedSize(horizontal: false, vertical: true)
                             Spacer()
                             if isSelected {
@@ -143,19 +161,13 @@ struct OnboardingView: View {
                                     .transition(.scale.combined(with: .opacity))
                             } else {
                                 Image(systemName: "circle")
-                                    .foregroundStyle(.secondary.opacity(0.5))
+                                    .foregroundStyle(.white.opacity(0.28))
                             }
                         }
                         .padding(.horizontal, 16)
-                        .frame(minHeight: 56)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(Color(uiColor: .secondarySystemBackground))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .stroke(isSelected ? AppTheme.accent : Color.secondary.opacity(0.12), lineWidth: 1)
-                                )
-                        )
+                        .frame(minHeight: 58)
+                        .background(Color.white.opacity(isSelected ? 0.105 : 0.045), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).stroke(isSelected ? AppTheme.accent.opacity(0.72) : Color.white.opacity(0.12), lineWidth: 1))
                         .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
                     .buttonStyle(.plain)
@@ -166,7 +178,7 @@ struct OnboardingView: View {
 
             Text(language.text("onboarding.language_hint", language.displayName))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -179,12 +191,14 @@ struct OnboardingView: View {
 
             VStack(spacing: 10) {
                 Text(language.text("onboarding.welcome_title"))
-                    .font(.title2.weight(.bold))
+                    .font(.title2.weight(.black))
+                    .textCase(.uppercase)
                     .multilineTextAlignment(.center)
+                    .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(language.text("onboarding.welcome_message"))
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.68))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -196,10 +210,8 @@ struct OnboardingView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(
-                    Color(uiColor: .secondarySystemBackground),
-                    in: RoundedRectangle(cornerRadius: 8, style: .continuous)
-                )
+                .background(Color.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).stroke(.white.opacity(0.11), lineWidth: 1))
         }
         .frame(maxWidth: .infinity, alignment: .top)
     }
@@ -210,12 +222,14 @@ struct OnboardingView: View {
 
             VStack(spacing: 8) {
                 Text(language.text("onboarding.versions_title"))
-                    .font(.title3.weight(.bold))
+                    .font(.title3.weight(.black))
+                    .textCase(.uppercase)
                     .multilineTextAlignment(.center)
+                    .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(language.text("onboarding.versions_subtitle"))
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.68))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -229,7 +243,7 @@ struct OnboardingView: View {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
                         Text("iOS 27.0").font(.subheadline.weight(.semibold))
                         Spacer()
-                        Text(language.text("onboarding.beta")).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                        Text(language.text("onboarding.beta")).font(.caption.weight(.semibold)).foregroundStyle(.white.opacity(0.58))
                     }
                     ForEach(ExploitSupportPolicy.verifiedIOS27Builds, id: \.build) { v in
                         let betaLabel = language.text("onboarding.developer_beta", "\(v.beta)")
@@ -250,15 +264,13 @@ struct OnboardingView: View {
                             }
                         }
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.white.opacity(0.66))
                         .padding(.leading, 24)
                     }
                 }
                 .padding(12)
-                .background(
-                    Color(uiColor: .secondarySystemBackground),
-                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
-                )
+                .background(Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).stroke(.white.opacity(0.10), lineWidth: 1))
             }
 
             Text(language.text("onboarding.versions_footer", AppInfo.osVersion, AppInfo.osBuild))
@@ -276,12 +288,14 @@ struct OnboardingView: View {
 
             VStack(spacing: 8) {
                 Text(language.text("onboarding.install_title"))
-                    .font(.title3.weight(.bold))
+                    .font(.title3.weight(.black))
+                    .textCase(.uppercase)
                     .multilineTextAlignment(.center)
+                    .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(language.text("onboarding.install_message"))
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.68))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -292,10 +306,8 @@ struct OnboardingView: View {
                 installBullet(icon: "exclamationmark.triangle.fill", text: language.text("onboarding.install_jailbreak"), color: .orange)
             }
             .padding(14)
-            .background(
-                Color(uiColor: .secondarySystemBackground),
-                in: RoundedRectangle(cornerRadius: 10, style: .continuous)
-            )
+            .background(Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).stroke(.white.opacity(0.10), lineWidth: 1))
 
             Text(language.text("onboarding.install_footer"))
                 .font(.caption)
@@ -308,11 +320,11 @@ struct OnboardingView: View {
 
     private func featureIcon(systemName: String, color: Color) -> some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(uiColor: .secondarySystemBackground))
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.white.opacity(0.065))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(color.opacity(0.3), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(color.opacity(0.42), lineWidth: 1)
                 )
             Image(systemName: systemName)
                 .font(.system(size: 28, weight: .medium))
@@ -348,7 +360,8 @@ struct OnboardingView: View {
         }
         .font(.subheadline)
         .padding(12)
-        .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).stroke(.white.opacity(0.10), lineWidth: 1))
     }
 
     private func installBullet(icon: String, text: String, color: Color) -> some View {
@@ -381,9 +394,9 @@ struct OnboardingView: View {
         .padding(.top, 12)
         .padding(.bottom, 10)
         .frame(maxWidth: .infinity)
-        .background(.bar)
+        .background(Color.black.opacity(0.58))
         .overlay(alignment: .top) {
-            Divider()
+            Rectangle().fill(.white.opacity(0.12)).frame(height: 0.5)
         }
     }
 
@@ -399,6 +412,7 @@ struct OnboardingView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
+            .tint(.white.opacity(0.78))
         }
 
         Button {
@@ -420,6 +434,7 @@ struct OnboardingView: View {
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
+        .tint(AppTheme.accent)
     }
 
     private func navigate(to destination: OnboardingStep, direction: OnboardingNavigationDirection) {

@@ -64,15 +64,21 @@ struct CleanerView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                AppSearchField(
-                    text: $searchText,
-                    prompt: language.text("cleaner.search"),
-                    clearLabel: language.text("common.clear")
-                )
-                Divider()
-                cleanerList
-                    .listStyle(.insetGrouped)
+            ZStack {
+                ParticleFieldBackground()
+                VStack(spacing: 0) {
+                    AppSearchField(
+                        text: $searchText,
+                        prompt: language.text("cleaner.search"),
+                        clearLabel: language.text("common.clear")
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    cleanerList
+                        .listStyle(.insetGrouped)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.clear)
+                }
             }
             .navigationTitle(language.text("cleaner.title"))
             .navigationBarTitleDisplayMode(.inline)
@@ -101,17 +107,36 @@ struct CleanerView: View {
 
     private var summarySection: some View {
         Section {
-            LabeledContent(language.text("cleaner.available")) {
-                Text(sizeText(totalAvailableBytes))
-                    .monospacedDigit()
+            VStack(spacing: 12) {
+                HStack(alignment: .top, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(language.text("cleaner.available"))
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.secondary)
+                        Text(sizeText(totalAvailableBytes))
+                            .font(.system(.title2, design: .rounded).weight(.bold))
+                            .monospacedDigit()
+                    }
+                    Spacer(minLength: 4)
+                    VStack(alignment: .trailing, spacing: 5) {
+                        Text(language.text("cleaner.selected"))
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.secondary)
+                        Text(language.text("cleaner.selected_summary", Int64(selectedBundleIDs.count), sizeText(selectedBytes)))
+                            .font(.subheadline.weight(.semibold))
+                            .monospacedDigit()
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+                Rectangle().fill(.white.opacity(0.08)).frame(height: 0.5)
+                cleanAction
             }
-            LabeledContent(language.text("cleaner.selected")) {
-                Text(language.text("cleaner.selected_summary", Int64(selectedBundleIDs.count), sizeText(selectedBytes)))
-                    .monospacedDigit()
-            }
-            cleanAction
+            .padding(14)
+            .liquidGlassCard(cornerRadius: 18, tint: AppTheme.accent, opacity: 0.10)
+            .listRowBackground(Color.clear)
         } header: {
             Label(language.text("cleaner.limited_mode"), systemImage: "checkmark.shield")
+                .foregroundStyle(AppTheme.accent)
         } footer: {
             Text(language.text("cleaner.scope_footer"))
         }
@@ -123,7 +148,7 @@ struct CleanerView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.accent)
                     Text(language.text("browser.search_empty"))
                         .font(.headline)
                     Text(language.text("cleaner.search_empty_message"))
@@ -132,7 +157,9 @@ struct CleanerView: View {
                 }
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
+                .padding(22)
+                .liquidGlassCard(cornerRadius: 18, tint: AppTheme.accent, opacity: 0.07)
+                .listRowBackground(Color.clear)
             } else {
                 ForEach(filteredRecords) { record in
                     Button {
@@ -142,6 +169,7 @@ struct CleanerView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(isCleaning)
+                    .listRowBackground(Color.clear)
                 }
             }
         } header: {
@@ -191,8 +219,9 @@ struct CleanerView: View {
                 .foregroundStyle(selectedBundleIDs.contains(record.id) ? AppTheme.accent : Color.secondary)
                 .accessibilityHidden(true)
         }
-        .contentShape(Rectangle())
-        .padding(.vertical, 2)
+        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(11)
+        .liquidGlassCard(cornerRadius: 14, tint: AppTheme.accent, opacity: selectedBundleIDs.contains(record.id) ? 0.12 : 0.055)
         .accessibilityElement(children: .combine)
         .accessibilityValue(
             selectedBundleIDs.contains(record.id)
@@ -320,7 +349,7 @@ struct CleanerView: View {
                 } else {
                     Image(systemName: "checkmark.circle")
                         .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.accent)
                     Text(language.text("cleaner.empty_title"))
                         .font(.headline)
                     Text(language.text("cleaner.empty_message"))
@@ -333,7 +362,9 @@ struct CleanerView: View {
             }
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 32)
+            .padding(24)
+            .liquidGlassCard(cornerRadius: 22, tint: AppTheme.accent, opacity: 0.08)
+            .padding(.vertical, 20)
         }
     }
 

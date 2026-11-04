@@ -9,30 +9,37 @@ struct FilesTabSwitcherView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(session.tabs) { tab in
-                    Button {
-                        session.selectTab(tab.id)
-                        dismiss()
-                    } label: {
-                        tabRow(tab)
-                    }
-                    .buttonStyle(.plain)
-                    .contextMenu { tabActions(tab) }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            session.closeTab(tab.id)
-                        } label: {
-                            Label(language.text("browser.close_tab"), systemImage: "xmark")
-                        }
+            ZStack {
+                ParticleFieldBackground()
+                List {
+                    ForEach(session.tabs) { tab in
                         Button {
-                            beginRename(tab)
+                            session.selectTab(tab.id)
+                            dismiss()
                         } label: {
-                            Label(language.text("browser.rename_tab"), systemImage: "pencil")
+                            tabRow(tab)
                         }
-                        .tint(AppTheme.accent)
+                        .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
+                        .contextMenu { tabActions(tab) }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                session.closeTab(tab.id)
+                            } label: {
+                                Label(language.text("browser.close_tab"), systemImage: "xmark")
+                            }
+                            Button {
+                                beginRename(tab)
+                            } label: {
+                                Label(language.text("browser.rename_tab"), systemImage: "pencil")
+                            }
+                            .tint(AppTheme.accent)
+                        }
                     }
                 }
+                .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
             }
             .navigationTitle(language.text("browser.tabs"))
             .navigationBarTitleDisplayMode(.inline)
@@ -74,7 +81,9 @@ struct FilesTabSwitcherView: View {
         HStack(spacing: 12) {
             Image(systemName: tab.id == session.selectedTabID ? "folder.fill" : "folder")
                 .foregroundStyle(tab.id == session.selectedTabID ? AppTheme.accent : Color.secondary)
-                .frame(width: 28)
+                .font(.system(size: 18, weight: .semibold))
+                .frame(width: 38, height: 38)
+                .background(AppTheme.accent.opacity(tab.id == session.selectedTabID ? 0.16 : 0.08), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(tab.displayTitle(defaultTitle: language.text("browser.tabs_root")))
@@ -95,8 +104,9 @@ struct FilesTabSwitcherView: View {
                     .foregroundStyle(AppTheme.accent)
             }
         }
-        .contentShape(Rectangle())
-        .padding(.vertical, 3)
+        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(12)
+        .liquidGlassCard(cornerRadius: 16, tint: AppTheme.accent, opacity: tab.id == session.selectedTabID ? 0.10 : 0.055)
     }
 
     @ViewBuilder

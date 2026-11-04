@@ -82,44 +82,52 @@ struct FileBrowserView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            AppSearchField(
-                text: $fileSearchText,
-                prompt: language.text("browser.search_files"),
-                clearLabel: language.text("common.clear")
-            )
-            Divider()
-            List {
-                Section {
-                    ForEach(filteredEntries) { entry in
-                        fileRow(entry)
-                    }
-                } header: {
-                    Text(language.text("browser.items_count", Int64(filteredEntries.count)))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .textCase(nil)
-                }
-            }
-            .listStyle(.insetGrouped)
-            .environment(\.defaultMinListRowHeight, AppTheme.fileRowHeight)
-            .scrollDismissesKeyboard(.interactively)
-            .overlay {
-                Group {
-                    switch overlayState {
-                    case .loading:
-                        ProgressView(language.text("browser.loading"))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    case .empty:
-                        fileEmptyView
-                    case .noResults:
-                        searchEmptyView
-                    case .none:
-                        EmptyView()
+        ZStack {
+            ParticleFieldBackground()
+            VStack(spacing: 0) {
+                AppSearchField(
+                    text: $fileSearchText,
+                    prompt: language.text("browser.search_files"),
+                    clearLabel: language.text("common.clear")
+                )
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                List {
+                    Section {
+                        ForEach(filteredEntries) { entry in
+                            fileRow(entry)
+                        }
+                    } header: {
+                        Text(language.text("browser.items_count", Int64(filteredEntries.count)))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .textCase(nil)
                     }
                 }
-                .transition(.opacity)
-                .animation(interfaceAnimation, value: overlayState)
+                .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+                .environment(\.defaultMinListRowHeight, AppTheme.fileRowHeight)
+                .scrollDismissesKeyboard(.interactively)
+                .overlay {
+                    Group {
+                        switch overlayState {
+                        case .loading:
+                            ProgressView(language.text("browser.loading"))
+                                .padding(18)
+                                .liquidGlassCard(cornerRadius: 18, tint: AppTheme.accent, opacity: 0.07)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        case .empty:
+                            fileEmptyView
+                        case .noResults:
+                            searchEmptyView
+                        case .none:
+                            EmptyView()
+                        }
+                    }
+                    .transition(.opacity)
+                    .animation(interfaceAnimation, value: overlayState)
+                }
             }
         }
         .navigationTitle(currentPath == containerPath ? title : (currentPath as NSString).lastPathComponent)
@@ -401,6 +409,7 @@ struct FileBrowserView: View {
             }
             .buttonStyle(.plain)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 12))
+            .listRowBackground(Color.clear)
         } else if entry.isDirectory {
             NavigationLink(
                 value: FileBrowserDestination(
@@ -414,6 +423,7 @@ struct FileBrowserView: View {
             }
             .contextMenu { fileActions(for: entry) }
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 12))
+            .listRowBackground(Color.clear)
         } else {
             NavigationLink {
                 FileQuickLookView(file: entry)
@@ -423,6 +433,7 @@ struct FileBrowserView: View {
             .contextMenu { fileActions(for: entry) }
             .accessibilityHint(language.text("browser.file_actions_hint"))
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 12))
+            .listRowBackground(Color.clear)
         }
     }
 
@@ -505,22 +516,24 @@ struct FileBrowserView: View {
 
     private var fileEmptyView: some View {
         VStack(spacing: 10) {
-            Image(systemName: "folder")
+            Image(systemName: "folder.badge.plus")
                 .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.accent)
             Text(language.text("browser.empty_folder"))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(.headline)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+        .padding(24)
+        .liquidGlassCard(cornerRadius: 22, tint: AppTheme.accent, opacity: 0.10)
+        .padding(28)
     }
 
     private var searchEmptyView: some View {
         VStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.accent)
             Text(language.text("browser.search_empty"))
                 .font(.subheadline.weight(.medium))
             Text(language.text("browser.search_empty_message"))
@@ -529,7 +542,9 @@ struct FileBrowserView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+        .padding(24)
+        .liquidGlassCard(cornerRadius: 22, tint: AppTheme.accent, opacity: 0.08)
+        .padding(28)
     }
 
     private var isNamePromptPresented: Binding<Bool> {
@@ -1504,7 +1519,9 @@ private struct FileEntryRow: View {
                     .accessibilityHidden(true)
             }
         }
-        .contentShape(Rectangle())
+        .padding(10)
+        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .liquidGlassCard(cornerRadius: 14, tint: AppTheme.accent, opacity: 0.07)
         .accessibilityElement(children: .combine)
     }
 }
@@ -1556,8 +1573,13 @@ private struct FileSelectionActionBar: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 7)
-        .background(.bar)
-        .overlay(alignment: .top) { Divider() }
+        .background {
+            ZStack {
+                ParticleFieldBackground()
+                Color.black.opacity(0.58)
+            }
+        }
+        .overlay(alignment: .top) { Rectangle().fill(.white.opacity(0.09)).frame(height: 0.5) }
         .disabled(selectedCount == 0)
     }
 
@@ -1613,8 +1635,13 @@ private struct FilePasteBar: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
-        .background(.bar)
-        .overlay(alignment: .top) { Divider() }
+        .background {
+            ZStack {
+                ParticleFieldBackground()
+                Color.black.opacity(0.58)
+            }
+        }
+        .overlay(alignment: .top) { Rectangle().fill(.white.opacity(0.09)).frame(height: 0.5) }
     }
 }
 
@@ -1643,25 +1670,32 @@ struct FileQuickLookView: View {
     @State private var previewFailed = false
 
     var body: some View {
-        Group {
-            if let previewURL {
-                FileQuickLookController(url: previewURL)
-                    .ignoresSafeArea(edges: .bottom)
-            } else if previewFailed {
-                VStack(spacing: 12) {
-                    Image(systemName: "doc.questionmark")
-                        .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                        .foregroundStyle(.secondary)
-                    Text(language.text("browser.preview_error"))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
-            } else {
-                ProgressView(language.text("browser.loading"))
+        ZStack {
+            ParticleFieldBackground()
+            Group {
+                if let previewURL {
+                    FileQuickLookController(url: previewURL)
+                        .ignoresSafeArea(edges: .bottom)
+                } else if previewFailed {
+                    VStack(spacing: 12) {
+                        Image(systemName: "doc.questionmark")
+                            .font(.system(size: AppTheme.emptyIconSize, weight: .light))
+                            .foregroundStyle(AppTheme.accent)
+                        Text(language.text("browser.preview_error"))
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(24)
+                    .liquidGlassCard(cornerRadius: 20, tint: AppTheme.accent, opacity: 0.08)
+                    .padding(28)
+                } else {
+                    ProgressView(language.text("browser.loading"))
+                        .padding(18)
+                        .liquidGlassCard(cornerRadius: 18, tint: AppTheme.accent, opacity: 0.07)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
         }
         .navigationTitle(file.name)

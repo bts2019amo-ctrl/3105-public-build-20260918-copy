@@ -31,11 +31,16 @@ struct WallpaperLabView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                accessSection
-                packagesSection
+            ZStack {
+                ParticleFieldBackground()
+                List {
+                    accessSection
+                    packagesSection
+                }
+                .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
             }
-            .listStyle(.insetGrouped)
             .navigationTitle(language.text("wallpaper.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
@@ -88,40 +93,57 @@ struct WallpaperLabView: View {
     private var accessSection: some View {
         Section {
             if let report {
-                HStack {
-                    Label(
-                        language.text(report.canInstall
-                            ? "wallpaper.access_ready"
-                            : "wallpaper.access_read_only"),
-                        systemImage: report.canInstall
-                            ? "checkmark.shield.fill"
-                            : "exclamationmark.triangle.fill"
-                    )
-                    .foregroundStyle(report.canInstall ? Color.green : Color.orange)
-                    Spacer()
-                    Text("MHA-C2")
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.secondary)
-                }
-                Text(
-                    language.text(
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 10) {
+                        Image(systemName: report.canInstall ? "checkmark.shield.fill" : "exclamationmark.triangle.fill")
+                            .font(.title3)
+                            .foregroundStyle(report.canInstall ? Color.green : Color.orange)
+                        Label(
+                            language.text(report.canInstall
+                                ? "wallpaper.access_ready"
+                                : "wallpaper.access_read_only"),
+                            systemImage: report.canInstall
+                                ? "checkmark.shield.fill"
+                                : "exclamationmark.triangle.fill"
+                        )
+                        .font(.subheadline.weight(.semibold))
+                        .labelStyle(.titleOnly)
+                        Spacer(minLength: 0)
+                        Text("MHA-C2")
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                    }
+                    Text(language.text(
                         "wallpaper.store_summary",
                         report.layout.generation,
                         Int64(report.layout.extensionDescriptorDirectories.count),
                         Int64(report.descriptorCount)
-                    )
-                )
-                .font(.caption.monospaced())
-                .foregroundStyle(.secondary)
+                    ))
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                }
+                .padding(14)
+                .liquidGlassCard(cornerRadius: 16, tint: AppTheme.accent, opacity: 0.09)
+                .listRowBackground(Color.clear)
             } else if let accessError {
-                Label(accessError, systemImage: "xmark.shield.fill")
-                    .foregroundStyle(.red)
-                Button(language.text("wallpaper.try_again")) { checkAccess() }
+                VStack(alignment: .leading, spacing: 10) {
+                    Label(accessError, systemImage: "xmark.shield.fill")
+                        .foregroundStyle(.red)
+                    Button(language.text("wallpaper.try_again")) { checkAccess() }
+                        .buttonStyle(.bordered)
+                }
+                .padding(14)
+                .liquidGlassCard(cornerRadius: 16, tint: .red, opacity: 0.06)
+                .listRowBackground(Color.clear)
             } else {
                 HStack(spacing: 10) {
                     ProgressView()
                     Text(language.text("wallpaper.checking"))
                 }
+                .padding(14)
+                .liquidGlassCard(cornerRadius: 16, tint: AppTheme.accent, opacity: 0.06)
+                .listRowBackground(Color.clear)
             }
         } header: { Text(language.text("wallpaper.access")) }
     }
@@ -143,7 +165,9 @@ struct WallpaperLabView: View {
                         .buttonStyle(.bordered)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
+                .padding(20)
+                .liquidGlassCard(cornerRadius: 20, tint: AppTheme.accent, opacity: 0.08)
+                .listRowBackground(Color.clear)
             } else {
                 ForEach(packages) { package in
                     NavigationLink {
@@ -157,6 +181,7 @@ struct WallpaperLabView: View {
                     } label: {
                         packageRow(package)
                     }
+                    .listRowBackground(Color.clear)
                 }
             }
         } header: {
@@ -168,7 +193,7 @@ struct WallpaperLabView: View {
 
     private func packageRow(_ package: WallpaperStagedPackage) -> some View {
         HStack(spacing: 12) {
-            AppRowIcon(systemName: "photo.on.rectangle.angled")
+            AppRowIcon(systemName: "photo.on.rectangle.angled", symbolSize: 20, frameSize: 42)
             VStack(alignment: .leading, spacing: 3) {
                 Text(package.displayName)
                     .font(.body.weight(.semibold))
@@ -185,8 +210,9 @@ struct WallpaperLabView: View {
                 .foregroundStyle(.secondary)
             }
         }
-        .contentShape(Rectangle())
-        .padding(.vertical, 3)
+        .contentShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .padding(12)
+        .liquidGlassCard(cornerRadius: 15, tint: AppTheme.accent, opacity: 0.08)
     }
 
     @ToolbarContentBuilder
@@ -431,67 +457,85 @@ private struct WallpaperPackageDetailView: View {
     let onApply: () -> Void
 
     var body: some View {
-        List {
-            Section {
-                HStack(spacing: 14) {
-                    AppRowIcon(
-                        systemName: "photo.on.rectangle.angled",
-                        symbolSize: 24,
-                        frameSize: 52
-                    )
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(package.displayName)
-                            .font(.title3.weight(.bold))
-                        Text(language.text(
-                            "wallpaper.package_summary",
-                            Int64(package.payload.descriptors.count),
-                            sizeText(package.payload.totalBytes)
-                        ))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        Text(language.text(
-                            "wallpaper.package_files",
-                            Int64(package.payload.fileCount)
-                        ))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 6)
-            }
-
-            Section(language.text("wallpaper.package_details")) {
-                ForEach(package.payload.descriptors) { descriptor in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(descriptor.directoryURL.lastPathComponent)
-                            .font(.body.weight(.semibold))
-                        Text(descriptor.extensionIdentifier)
-                            .font(.caption.monospaced())
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                        Text(
-                            "\(descriptor.fileCount) · \(sizeText(descriptor.byteCount))"
+        ZStack {
+            ParticleFieldBackground()
+            List {
+                Section {
+                    HStack(spacing: 14) {
+                        AppRowIcon(
+                            systemName: "photo.on.rectangle.angled",
+                            symbolSize: 24,
+                            frameSize: 52
                         )
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(package.displayName)
+                                .font(.title3.weight(.bold))
+                            Text(language.text(
+                                "wallpaper.package_summary",
+                                Int64(package.payload.descriptors.count),
+                                sizeText(package.payload.totalBytes)
+                            ))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            Text(language.text(
+                                "wallpaper.package_files",
+                                Int64(package.payload.fileCount)
+                            ))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 0)
                     }
-                    .padding(.vertical, 3)
+                    .padding(14)
+                    .liquidGlassCard(cornerRadius: 18, tint: AppTheme.accent, opacity: 0.10)
+                    .listRowBackground(Color.clear)
                 }
-            }
 
-            Section {
-                Button(action: onApply) {
-                    Text(language.text("wallpaper.install"))
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity, minHeight: 44)
+                Section(language.text("wallpaper.package_details")) {
+                    ForEach(package.payload.descriptors) { descriptor in
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "photo.stack")
+                                    .foregroundStyle(AppTheme.accent)
+                                Text(descriptor.directoryURL.lastPathComponent)
+                                    .font(.body.weight(.semibold))
+                                    .lineLimit(2)
+                                Spacer(minLength: 0)
+                            }
+                            Text(descriptor.extensionIdentifier)
+                                .font(.caption.monospaced())
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                                .textSelection(.enabled)
+                            Text("\(descriptor.fileCount) · \(sizeText(descriptor.byteCount))")
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(AppTheme.accent)
+                        }
+                        .padding(12)
+                        .liquidGlassCard(cornerRadius: 14, tint: AppTheme.accent, opacity: 0.06)
+                        .listRowBackground(Color.clear)
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(!canInstall)
-            } footer: {
-                Text(language.text("wallpaper.after_apply_guide"))
+
+                Section {
+                    Button(action: onApply) {
+                        Label(language.text("wallpaper.install"), systemImage: "sparkles")
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity, minHeight: 48)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!canInstall)
+                    .listRowBackground(Color.clear)
+                    .padding(.vertical, 4)
+                } footer: {
+                    Text(language.text("wallpaper.after_apply_guide"))
+                        .foregroundStyle(.secondary)
+                }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
         }
-        .listStyle(.insetGrouped)
         .navigationTitle(package.displayName)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -668,69 +712,94 @@ struct WallpaperResetSettingsView: View {
     @State private var alert: WallpaperResetAlert?
 
     var body: some View {
-        List {
-            Section(language.text("wallpaper.access")) {
-                if let report {
-                    Label(
-                        language.text(
-                            report.canInstall
-                                ? "wallpaper.access_ready"
-                                : "wallpaper.access_read_only"
-                        ),
-                        systemImage: report.canInstall
-                            ? "checkmark.shield.fill"
-                            : "exclamationmark.triangle.fill"
-                    )
-                    .foregroundStyle(report.canInstall ? Color.green : Color.orange)
-                    LabeledContent(language.text("wallpaper.custom_count")) {
-                        Text("\(report.customDescriptorCount)")
-                            .monospacedDigit()
-                    }
-                } else if !isBusy {
-                    Label(
-                        language.text("wallpaper.error.access"),
-                        systemImage: "xmark.shield.fill"
-                    )
-                    .foregroundStyle(.red)
-                }
-            }
-
-            if let report, report.customDescriptorCount > 0 {
-                Section {
-                    Button(role: .destructive) {
-                        alert = WallpaperResetAlert(kind: .confirm)
-                    } label: {
+        ZStack {
+            ParticleFieldBackground()
+            List {
+                Section(language.text("wallpaper.access")) {
+                    if let report {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Label(
+                                language.text(
+                                    report.canInstall
+                                        ? "wallpaper.access_ready"
+                                        : "wallpaper.access_read_only"
+                                ),
+                                systemImage: report.canInstall
+                                    ? "checkmark.shield.fill"
+                                    : "exclamationmark.triangle.fill"
+                            )
+                            .foregroundStyle(report.canInstall ? Color.green : Color.orange)
+                            Rectangle().fill(.white.opacity(0.08)).frame(height: 0.5)
+                            LabeledContent(language.text("wallpaper.custom_count")) {
+                                Text("\(report.customDescriptorCount)")
+                                    .font(.title3.weight(.semibold))
+                                    .monospacedDigit()
+                            }
+                        }
+                        .padding(14)
+                        .liquidGlassCard(cornerRadius: 16, tint: AppTheme.accent, opacity: 0.08)
+                        .listRowBackground(Color.clear)
+                    } else if !isBusy {
                         Label(
-                            language.text("wallpaper.reset"),
-                            systemImage: "arrow.counterclockwise"
+                            language.text("wallpaper.error.access"),
+                            systemImage: "xmark.shield.fill"
                         )
+                        .foregroundStyle(.red)
+                        .padding(14)
+                        .liquidGlassCard(cornerRadius: 16, tint: .red, opacity: 0.06)
+                        .listRowBackground(Color.clear)
+                    } else {
+                        HStack(spacing: 10) {
+                            ProgressView()
+                            Text(language.text(operationKey))
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(14)
+                        .liquidGlassCard(cornerRadius: 16, tint: AppTheme.accent, opacity: 0.06)
+                        .listRowBackground(Color.clear)
                     }
-                    .disabled(isBusy || !report.canInstall)
-                } footer: {
-                    Text(language.text("wallpaper.reset_footer"))
                 }
-            } else if report != nil {
-                Section {
-                    VStack(spacing: 10) {
-                        Image(systemName: "photo.stack")
-                            .font(.system(
-                                size: AppTheme.emptyIconSize,
-                                weight: .light
-                            ))
-                            .foregroundStyle(AppTheme.accent)
-                        Text(language.text("wallpaper.no_custom_title"))
-                            .font(.headline)
-                        Text(language.text("wallpaper.no_custom_message"))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
+
+                if let report, report.customDescriptorCount > 0 {
+                    Section {
+                        Button(role: .destructive) {
+                            alert = WallpaperResetAlert(kind: .confirm)
+                        } label: {
+                            Label(
+                                language.text("wallpaper.reset"),
+                                systemImage: "arrow.counterclockwise"
+                            )
+                        }
+                        .disabled(isBusy || !report.canInstall)
+                        .listRowBackground(Color.clear)
+                        .padding(10)
+                    } footer: {
+                        Text(language.text("wallpaper.reset_footer"))
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 28)
+                } else if report != nil {
+                    Section {
+                        VStack(spacing: 10) {
+                            Image(systemName: "photo.stack")
+                                .font(.system(size: AppTheme.emptyIconSize, weight: .light))
+                                .foregroundStyle(AppTheme.accent)
+                            Text(language.text("wallpaper.no_custom_title"))
+                                .font(.headline)
+                            Text(language.text("wallpaper.no_custom_message"))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(22)
+                        .liquidGlassCard(cornerRadius: 20, tint: AppTheme.accent, opacity: 0.08)
+                        .listRowBackground(Color.clear)
+                    }
                 }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
         }
-        .listStyle(.insetGrouped)
         .navigationTitle(language.text("wallpaper.reset"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

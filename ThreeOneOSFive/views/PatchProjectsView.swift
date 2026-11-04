@@ -103,8 +103,7 @@ struct PatchProjectsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AnimatedGlassWallpaper()
-                    .ignoresSafeArea()
+                ParticleFieldBackground()
 
                 if showGameSelection {
                     gameSelectionContent
@@ -180,6 +179,7 @@ struct PatchProjectsView: View {
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .preferredColorScheme(.dark)
             .alert(language.text("patch.open_game"), isPresented: Binding(
                 get: { launchMessage != nil },
                 set: { if !$0 { launchMessage = nil } }
@@ -371,7 +371,6 @@ struct PatchProjectsView: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .dynamicTypeSize(.large)
     }
 
     private func gameSelectionCard(
@@ -387,35 +386,42 @@ struct PatchProjectsView: View {
                 showGameSelection = false
             }
         } label: {
-            HStack(spacing: 14) {
+            HStack(spacing: 16) {
                 Image(category == .max ? "FreeFireMax" : "FreeFireNormal")
                     .resizable()
                     .scaledToFill()
-                .frame(width: 58, height: 58)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .frame(width: 66, height: 66)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(Color.white.opacity(0.14), lineWidth: 0.8)
+                    }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.body.weight(.semibold))
+                        .font(.headline.weight(.bold))
                         .foregroundStyle(.white)
                     Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.62))
                 }
 
                 Spacer(minLength: 0)
 
-                Image(systemName: "chevron.right")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                Image(systemName: "arrow.up.right")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(AppTheme.accent)
+                    .frame(width: 36, height: 36)
+                    .background(AppTheme.accent.opacity(0.12), in: Circle())
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 11)
-            .background(Color(red: 0.075, green: 0.075, blue: 0.085), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 15)
+            .background(Color(red: 0.075, green: 0.07, blue: 0.10).opacity(0.84), in: RoundedRectangle(cornerRadius: 21, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.white.opacity(0.12), lineWidth: 0.8)
+                RoundedRectangle(cornerRadius: 21, style: .continuous)
+                    .stroke(LinearGradient(colors: [AppTheme.accent.opacity(0.36), Color.white.opacity(0.08)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
             }
+            .shadow(color: AppTheme.accent.opacity(0.08), radius: 18, y: 7)
         }
         .buttonStyle(.plain)
     }
@@ -554,10 +560,10 @@ struct PatchProjectsView: View {
                 }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 14)
-                    .background(Color(red: 0.075, green: 0.075, blue: 0.085), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(Color(red: 0.065, green: 0.065, blue: 0.085).opacity(0.86), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 0.8)
+                        RoundedRectangle(cornerRadius: 17, style: .continuous)
+                            .stroke(Color.white.opacity(0.10), lineWidth: 0.8)
                     }
             }
             .buttonStyle(.plain)
@@ -574,10 +580,10 @@ struct PatchProjectsView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
-            .background(Color(red: 0.075, green: 0.075, blue: 0.085), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(Color(red: 0.065, green: 0.065, blue: 0.085).opacity(0.86), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(Color.white.opacity(0.12), lineWidth: 0.8)
+                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                    .stroke(Color.white.opacity(0.10), lineWidth: 0.8)
             }
         }
     }
@@ -628,7 +634,7 @@ struct PatchProjectsView: View {
                 .foregroundStyle(.black)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 13)
-                .background(Color.white, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(AppTheme.accent, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
             }
             .buttonStyle(.plain)
             .disabled(isRefreshing)
@@ -639,10 +645,10 @@ struct PatchProjectsView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 13)
-                    .background(Color.clear, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(Color.white.opacity(0.75), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 15, style: .continuous)
+                            .stroke(Color.white.opacity(0.22), lineWidth: 0.8)
                     }
             }
             .buttonStyle(.plain)
@@ -684,8 +690,13 @@ struct PatchProjectsView: View {
                 .background(Color.white.opacity(0.1), in: Circle())
                 .accessibilityLabel("\(selectedCategoryItems.count) patches")
         }
-        .padding(.horizontal, 4)
-        .padding(.vertical, 2)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.white.opacity(0.08), lineWidth: 0.7)
+        }
     }
 
     private var gameIdentityHeader: some View {
@@ -714,7 +725,7 @@ struct PatchProjectsView: View {
         }
         .padding(.horizontal, 13)
         .padding(.vertical, 10)
-        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color(red: 0.075, green: 0.07, blue: 0.10).opacity(0.82), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(Color.white.opacity(0.13), lineWidth: 0.8)
@@ -890,8 +901,8 @@ struct ExternalPanelView: View {
             footer
         }
         .padding(14)
-        .background(Color.black.opacity(0.82), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Color.red.opacity(0.25), lineWidth: 1))
+        .background(Color(red: 0.055, green: 0.05, blue: 0.075).opacity(0.82), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(AppTheme.accent.opacity(0.24), lineWidth: 1))
         .shadow(color: .black.opacity(0.35), radius: 20, y: 10)
         .alert(language.text("external.title"), isPresented: Binding(
             get: { actionMessage != nil },
@@ -1423,6 +1434,12 @@ struct PatchUnlockView: View {
             }
             .navigationTitle(language.text("patch.unlock"))
             .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background { ParticleFieldBackground() }
+            .listRowBackground(Color(red: 0.065, green: 0.065, blue: 0.085).opacity(0.84))
+            .listRowSeparatorTint(Color.white.opacity(0.10))
+            .tint(AppTheme.accent)
+            .preferredColorScheme(.dark)
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -1635,6 +1652,11 @@ private struct PatchProjectDetailView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background { ParticleFieldBackground() }
+        .listRowBackground(Color(red: 0.065, green: 0.065, blue: 0.085).opacity(0.84))
+        .listRowSeparatorTint(Color.white.opacity(0.10))
+        .tint(AppTheme.accent)
         .navigationTitle(item?.project?.name ?? language.text("patch.title"))
         .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
