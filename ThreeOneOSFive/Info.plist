@@ -9,7 +9,7 @@
         <string>pt-BR</string>
     </array>
     <key>CFBundleDisplayName</key>
-    <string>EXTERNAL SYSTEM</string>
+    <string>X</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -17,13 +17,13 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>EXTERNAL SYSTEM</string>
+    <string>X</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
     <string>1.1.1</string>
     <key>CFBundleVersion</key>
-    <string>12</string>
+    <string>17</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>

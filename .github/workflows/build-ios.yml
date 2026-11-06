@@ -1,4 +1,4 @@
-name: Build iOS app - Remote Patch Central
+name: Build iOS app - X
 
 on:
   workflow_dispatch:
@@ -40,14 +40,14 @@ jobs:
           test -d "$APP_PATH"
           mkdir -p "$RUNNER_TEMP/ipa/Payload"
           cp -R "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/"
-          (cd "$RUNNER_TEMP/ipa" && zip -qry "$RUNNER_TEMP/3105-RemotePatchCentral.ipa" Payload)
+          (cd "$RUNNER_TEMP/ipa" && zip -qry "$RUNNER_TEMP/X.ipa" Payload)
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: 3105-remote-patch-central-ipa
+          name: x-ios-ipa
           path: |
-            ${{ runner.temp }}/3105-RemotePatchCentral.ipa
+            ${{ runner.temp }}/X.ipa
             ${{ runner.temp }}/xcodebuild.log
           if-no-files-found: error
           retention-days: 14

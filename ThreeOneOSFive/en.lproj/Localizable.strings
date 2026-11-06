@@ -689,7 +689,7 @@
 "wallpaper.package_details" = "Package Details";
 "wallpaper.package_files" = "%lld files";
 
-"brand.external_system" = "EXTERNAL SYSTEM";
+"brand.external_system" = "EXTERNAL X";
 "login.subtitle" = "Enter your key to access the app.";
 "login.key_placeholder" = "Access key";
 "login.hide_key" = "Hide key";
@@ -697,7 +697,7 @@
 "login.enter" = "ENTER";
 "login.paste_key" = "Paste key";
 "login.clear_external" = "CLEAR ALL EXTERNAL DATA";
-"login.official_version" = "Official EXTERNAL SYSTEM version";
+"login.official_version" = "Official EXTERNAL X version";
 "patch.choose_game" = "Choose your game";
 "patch.assets_notice" = "Assets are loaded from the online panel only.";
 "patch.refresh" = "Refresh";

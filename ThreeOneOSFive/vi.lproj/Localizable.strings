@@ -689,7 +689,7 @@
 "wallpaper.package_details" = "Chi tiết gói";
 "wallpaper.package_files" = "%lld tệp";
 
-"brand.external_system" = "EXTERNAL SYSTEM";
+"brand.external_system" = "EXTERNAL X";
 "login.subtitle" = "Nhập key để truy cập ứng dụng.";
 "login.key_placeholder" = "Key truy cập";
 "login.hide_key" = "Ẩn key";
@@ -697,7 +697,7 @@
 "login.enter" = "VÀO";
 "login.paste_key" = "Dán key";
 "login.clear_external" = "XÓA TẤT CẢ DỮ LIỆU EXTERNAL";
-"login.official_version" = "Phiên bản EXTERNAL SYSTEM chính thức";
+"login.official_version" = "Phiên bản EXTERNAL X chính thức";
 "patch.choose_game" = "Chọn game";
 "patch.assets_notice" = "Asset chỉ được tải từ bảng điều khiển trực tuyến.";
 "patch.refresh" = "Làm mới";

@@ -587,7 +587,7 @@ private struct DeltaHeader: View {
                 Color.clear.frame(width: 42, height: 42)
             }
 
-            Text("EXTERNAL SYSTEM")
+            Text("EXTERNAL X")
                 .font(.system(size: 15, weight: .black, design: .rounded))
                 .tracking(1.4)
                 .foregroundStyle(DeltaColors.ink)
@@ -946,7 +946,7 @@ private struct DeltaHomeTab: View {
     var body: some View {
         VStack(spacing: 12) {
             DeltaCard {
-                Label("Welcome back to EXTERNAL SYSTEM! Have a good day.", systemImage: "sparkles")
+                Label("Welcome back to EXTERNAL X! Have a good day.", systemImage: "sparkles")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(DeltaColors.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1512,7 +1512,7 @@ private struct DeltaReferenceSettingsTab: View {
             }
             DeltaCard {
                 DeltaSectionTitle(isVietnamese ? "THÃNG TIN Báº¢N QUYá»N" : "LICENSE INFORMATION", icon: "key.fill")
-                DeltaInfoRow(isVietnamese ? "Báº£n quyá»n:" : "License:", value: "EXTERNAL SYSTEM")
+                DeltaInfoRow(isVietnamese ? "Báº£n quyá»n:" : "License:", value: "EXTERNAL X")
                 DeltaInfoRow(isVietnamese ? "Háº¡n dÃ¹ng:" : "Expired:", value: "Lifetime")
                 HStack {
                     Text("UID:").font(.caption).foregroundStyle(DeltaColors.muted)

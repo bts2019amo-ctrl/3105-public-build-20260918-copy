@@ -41,7 +41,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("EXTERNAL SYSTEM")
+                    Text("EXTERNAL X")
                         .font(.headline.weight(.black))
                         .tracking(1.8)
                         .foregroundStyle(.white)

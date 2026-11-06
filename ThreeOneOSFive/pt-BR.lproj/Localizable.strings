@@ -689,7 +689,7 @@
 "wallpaper.package_details" = "Detalhes do pacote";
 "wallpaper.package_files" = "%lld arquivos";
 
-"brand.external_system" = "EXTERNAL SYSTEM";
+"brand.external_system" = "EXTERNAL X";
 "login.subtitle" = "Insira sua chave para acessar o app.";
 "login.key_placeholder" = "Chave de acesso";
 "login.hide_key" = "Ocultar chave";
@@ -697,7 +697,7 @@
 "login.enter" = "ENTRAR";
 "login.paste_key" = "Colar chave";
 "login.clear_external" = "LIMPAR TODOS OS DADOS EXTERNOS";
-"login.official_version" = "Versão oficial do EXTERNAL SYSTEM";
+"login.official_version" = "Versão oficial do EXTERNAL X";
 "patch.choose_game" = "Escolha seu jogo";
 "patch.assets_notice" = "Os recursos são carregados apenas pelo painel on-line.";
 "patch.refresh" = "Atualizar";
