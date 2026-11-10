@@ -61,6 +61,8 @@
     </array>
     <key>AppReleaseDisplayVersion</key>
     <string>1.1.1</string>
+    <key>PatchSyncToken</key>
+    <string>$(PATCH_SYNC_TOKEN)</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>LSApplicationQueriesSchemes</key>

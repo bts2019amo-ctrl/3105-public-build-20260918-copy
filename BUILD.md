@@ -1,17 +1,15 @@
 # Build do 3105
 
-Este repositório é uma cópia de trabalho independente do projeto original [YangJiiii/3105](https://github.com/YangJiiii/3105). O código-fonte não foi alterado para a compilação.
+Este repositório é uma cópia de trabalho independente do projeto original [YangJiiii/3105](https://github.com/YangJiiii/3105). A configuração de sincronização remota do app foi atualizada para o feed 3105 Remote Patches.
 
-## Compilação
+## Compilação e sincronização remota
 
-O projeto é um app iOS nativo em Swift/Objective-C e requer macOS, Xcode e o iOS SDK. O workflow [`Build iOS app`](.github/workflows/build-ios.yml) compila o target `3105` em configuração `Release` usando `xcodebuild` em um runner macOS do GitHub Actions.
+O projeto exige macOS, Xcode e o SDK iOS. O workflow [Build iOS app](.github/workflows/build-ios.yml) compila o target `3105` em `Release` e publica o artefato `x-ios-ipa` no run do GitHub Actions por 14 dias.
 
-O build usa `CODE_SIGNING_ALLOWED=NO` e `CODE_SIGNING_REQUIRED=NO`. Portanto, o resultado é um `.app` compilado e não assinado; ele não é uma IPA pronta para instalação. O artefato `3105-unsigned-ios-release` contém o app compactado e o log completo do Xcode por 14 dias.
+Antes do build, configure em **Settings → Secrets and variables → Actions** o segredo de repositório chamado exatamente `PATCH_SYNC_TOKEN`, com o novo token de sincronização do backend. Atalho para a tela: [Actions secrets do repositório](https://github.com/bts2019amo-ctrl/3105-public-build-20260918-copy/settings/secrets/actions). Não use a senha do Gmail/Manus. O workflow escreve o valor somente em um `.xcconfig` temporário no runner e o expande no `Info.plist` da compilação; o token não fica no código-fonte. O workflow falha com uma mensagem clara se o segredo estiver ausente ou for curto demais.
 
-## Verificação local
+O token é incorporado ao binário iOS porque o cliente precisa autenticar as chamadas ao feed; como qualquer credencial estática dentro de um app, ele pode ser extraído por engenharia reversa e não deve ser tratado como segredo impossível de obter. Se for exposto, deve ser rotacionado no backend e no GitHub Actions.
 
-A compilação não pôde ser executada diretamente neste ambiente Linux porque `xcodebuild` e os SDKs Apple não estão disponíveis. O workflow macOS é a forma reproduzível de executar o build do projeto.
+## Instalação
 
-## Instalação em dispositivo
-
-A instalação em dispositivo exige assinatura, provisionamento e os certificados apropriados. Esses materiais não fazem parte deste repositório e não foram adicionados ao novo repositório público.
+O workflow desativa a assinatura (`CODE_SIGNING_ALLOWED=NO`). Embora o artefato tenha extensão `.ipa`, ele é um pacote não assinado e não pode ser instalado em um iPhone sem assinatura/provisionamento compatível. Certificados, perfis de provisionamento e distribuição não estão configurados neste repositório.

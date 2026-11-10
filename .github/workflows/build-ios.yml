@@ -20,27 +20,53 @@ jobs:
 
       - name: Verify remote patch sync is versioned
         run: |
-          set -e
+          set -euo pipefail
           test -s ThreeOneOSFive/helpers/PatchProjectStore.swift
           grep -q 'RemotePatchConfiguration' ThreeOneOSFive/helpers/PatchProjectStore.swift
           grep -q 'patches.feed' ThreeOneOSFive/helpers/PatchProjectStore.swift
+          grep -q 'PatchSyncToken' ThreeOneOSFive/Info.plist
+          if grep -Eq 'static let syncToken = "[^"]+"' ThreeOneOSFive/helpers/PatchProjectStore.swift; then
+            echo '::error::Não grave token de sincronização diretamente no código-fonte.'
+            exit 1
+          fi
           wc -l -c ThreeOneOSFive/helpers/PatchProjectStore.swift
+
+      - name: Prepare remote sync secret
+        env:
+          PATCH_SYNC_TOKEN: ${{ secrets.PATCH_SYNC_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PATCH_SYNC_TOKEN:-}" ] || [ "${#PATCH_SYNC_TOKEN}" -lt 64 ]; then
+            echo '::error::Configure o Actions secret PATCH_SYNC_TOKEN para compilar a IPA com o novo feed.'
+            exit 1
+          fi
+          umask 077
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          token = os.environ["PATCH_SYNC_TOKEN"]
+          path = Path(os.environ["RUNNER_TEMP"]) / "patch-sync-token.xcconfig"
+          path.write_text(f"PATCH_SYNC_TOKEN = {token}\n", encoding="utf-8")
+          path.chmod(0o600)
+          PY
 
       - name: Build unsigned Release app
         run: |
-          set -o pipefail
+          set -euo pipefail
           xcodebuild \
             -project ThreeOneOSFive.xcodeproj \
             -scheme 3105 \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -xcconfig "$RUNNER_TEMP/patch-sync-token.xcconfig" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             build | tee "$RUNNER_TEMP/xcodebuild.log"
 
       - name: Package app artifact
         run: |
+          set -euo pipefail
           APP_PATH="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos/X.app"
           test -d "$APP_PATH"
           mkdir -p "$RUNNER_TEMP/ipa/Payload"

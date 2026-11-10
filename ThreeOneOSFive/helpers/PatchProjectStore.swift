@@ -3,8 +3,12 @@ import Foundation
 import UIKit
 
 enum RemotePatchConfiguration {
-    static let baseURL = URL(string: "https://patch3105-mvfjpcxv.manus.space")!
-    static let syncToken = "3105-sync-v1-9f2d7a4c"
+    static let baseURL = URL(string: "https://patch3105-ebnmw8rq.manus.space")!
+    static var syncToken: String {
+        (Bundle.main.object(forInfoDictionaryKey: "PatchSyncToken") as? String ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    static let allowedRemoteFeatures: Set<String> = ["cache", "avatar", "hologram", "skin"]
     static let pollIntervalNanoseconds: UInt64 = 2_000_000_000
 }
 
@@ -162,25 +166,18 @@ final class PatchProjectStore: ObservableObject {
         return value.contains("max") || value.contains("freefiremax") ? .max : .normal
     }
 
-    private static func inferredFeatureCategory(name: String, fileName: String) -> PatchFeatureCategory {
-        let value = "\(name) \(fileName)".lowercased()
-        if value.contains("external") || value.contains("aimbot") || value.contains("esp") { return .external }
-        if value.contains("skin") { return .skin }
-        if value.contains("avatar") { return .avatar }
-        if value.contains("hologram") || value.contains("holo") { return .hologram }
-        return .cache
-    }
-
     private func synchronizeRemoteFeed() async {
         guard IOSKeySession.runtimeAuthorized, isActivated, !remoteSyncInFlight else { return }
         remoteSyncInFlight = true
         defer { remoteSyncInFlight = false }
         remoteSyncState = .syncing
         do {
-            var components = URLComponents(
-                url: RemotePatchConfiguration.baseURL.appendingPathComponent("api/trpc/patches.feed"),
-                resolvingAgainstBaseURL: false
-            )!
+            guard !RemotePatchConfiguration.syncToken.isEmpty else {
+                throw NSError(domain: "RemotePatchFeed", code: 401, userInfo: [NSLocalizedDescriptionKey: "Token de sincronização não foi incluído nesta compilação."])
+            }
+            guard let feedURL = URL(string: "api/trpc/patches.feed", relativeTo: RemotePatchConfiguration.baseURL)?.absoluteURL else {
+                throw URLError(.badURL)
+            }
             let payload: [String: Any] = [
                 "json": [
                     "syncToken": RemotePatchConfiguration.syncToken,
@@ -188,20 +185,19 @@ final class PatchProjectStore: ObservableObject {
                 ]
             ]
             let payloadData = try JSONSerialization.data(withJSONObject: payload)
-            components.queryItems = [URLQueryItem(
-                name: "input",
-                value: String(data: payloadData, encoding: .utf8)
-            )]
             let networkConfiguration = URLSessionConfiguration.default
             networkConfiguration.waitsForConnectivity = true
             networkConfiguration.timeoutIntervalForRequest = 45
             networkConfiguration.timeoutIntervalForResource = 120
             networkConfiguration.requestCachePolicy = .reloadIgnoringLocalCacheData
             let networkSession = URLSession(configuration: networkConfiguration)
-            var feedRequest = URLRequest(url: components.url!)
+            var feedRequest = URLRequest(url: feedURL)
+            feedRequest.httpMethod = "POST"
+            feedRequest.httpBody = payloadData
             feedRequest.timeoutInterval = 30
             feedRequest.cachePolicy = .reloadIgnoringLocalCacheData
             feedRequest.setValue("application/json", forHTTPHeaderField: "Accept")
+            feedRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
             feedRequest.setValue("3105-iOS", forHTTPHeaderField: "User-Agent")
             let (data, response) = try await Self.fetchWithRetry(
                 feedRequest,
@@ -228,21 +224,23 @@ final class PatchProjectStore: ObservableObject {
             for patch in feed.patches {
                 await Task.yield()
                 do {
+                    let featureIdentifier = patch.feature.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                    guard RemotePatchConfiguration.allowedRemoteFeatures.contains(featureIdentifier),
+                          let feature = PatchFeatureCategory(rawValue: featureIdentifier),
+                          feature != .external else {
+                        skippedCount += 1
+                        continue
+                    }
                     let mappedID = PatchProjectLibrary.remotePackageID(for: patch.id)
                     let hasCurrentPackage = mappedID.map { id in allLocalItems.contains(where: { $0.id == id }) } ?? false
                     let category = PatchGameCategory(rawValue: patch.category.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())
                         ?? Self.inferredGameCategory(name: patch.name, fileName: patch.fileName)
-                    let normalizedPatchName = patch.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                    let feature = normalizedPatchName.caseInsensitiveCompare("External") == .orderedSame
-                        ? .external
-                        : (PatchFeatureCategory(rawValue: patch.feature.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())
-                            ?? Self.inferredFeatureCategory(name: patch.name, fileName: patch.fileName))
                     guard let url = Self.remoteURL(for: patch.fileUrl) else { continue }
                     if hasCurrentPackage && patch.updatedAt <= PatchProjectLibrary.remoteVersion(for: patch.id) {
                         if let mappedID {
                             PatchProjectLibrary.setCategory(category, for: mappedID)
                             PatchProjectLibrary.setFeatureCategory(feature, for: mappedID)
-                            PatchProjectLibrary.setFeatureIdentifier(patch.feature, for: mappedID)
+                            PatchProjectLibrary.setFeatureIdentifier(featureIdentifier, for: mappedID)
                             PatchProjectLibrary.clearRemoteWithdrawal(for: patch.id)
                         }
                         continue
@@ -339,13 +337,13 @@ final class PatchProjectStore: ObservableObject {
                             )
                             PatchProjectLibrary.setCategory(category, for: summaryToSave.packageID)
                             PatchProjectLibrary.setFeatureCategory(feature, for: summaryToSave.packageID)
-                            PatchProjectLibrary.setFeatureIdentifier(patch.feature, for: summaryToSave.packageID)
+                            PatchProjectLibrary.setFeatureIdentifier(featureIdentifier, for: summaryToSave.packageID)
                         }.value
                     }
                     PatchProjectLibrary.setRemotePackageID(summary.packageID, for: patch.id)
                     PatchProjectLibrary.setRemoteVersion(patch.updatedAt, for: patch.id)
                     PatchProjectLibrary.setDisplayName(patch.name, for: summary.packageID)
-                    PatchProjectLibrary.setFeatureIdentifier(patch.feature, for: summary.packageID)
+                    PatchProjectLibrary.setFeatureIdentifier(featureIdentifier, for: summary.packageID)
                     PatchProjectLibrary.setRemoteIconURL(patch.iconUrl, for: summary.packageID)
                     PatchProjectLibrary.setRemoteMetadata(
                         version: patch.version,
@@ -365,9 +363,11 @@ final class PatchProjectStore: ObservableObject {
             // The feed was decoded and passed the HTTP/checksum flow, so it is a
             // complete catalog snapshot. Unpublished packages with active receipts
             // are tombstoned and kept for recovery; inactive ones are removed.
-            PatchProjectLibrary.removeRemotePackagesNotInFeed(
-                remoteIDs: Set(feed.patches.map(\.id))
-            )
+            let acceptedRemoteIDs = Set(feed.patches.compactMap { patch in
+                let feature = patch.feature.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                return RemotePatchConfiguration.allowedRemoteFeatures.contains(feature) ? patch.id : nil
+            })
+            PatchProjectLibrary.removeRemotePackagesNotInFeed(remoteIDs: acceptedRemoteIDs)
             items = await Task.detached(priority: .utility) {
                 PatchProjectLibrary.load()
             }.value
@@ -387,10 +387,10 @@ final class PatchProjectStore: ObservableObject {
     }
 
     private static func remoteURL(for value: String) -> URL? {
-        if let absolute = URL(string: value), absolute.scheme != nil {
-            return absolute
-        }
-        return URL(string: value, relativeTo: RemotePatchConfiguration.baseURL)?.absoluteURL
+        guard let candidate = URL(string: value, relativeTo: RemotePatchConfiguration.baseURL)?.absoluteURL,
+              candidate.scheme?.lowercased() == "https",
+              candidate.host != nil else { return nil }
+        return candidate
     }
 
     private static func fetchWithRetry(
@@ -412,7 +412,7 @@ final class PatchProjectStore: ObservableObject {
     }
 
     private func sendRemoteHeartbeat() async {
-        guard IOSKeySession.runtimeAuthorized else { return }
+        guard IOSKeySession.runtimeAuthorized, !RemotePatchConfiguration.syncToken.isEmpty else { return }
         guard let url = URL(string: "api/trpc/patches.heartbeat", relativeTo: RemotePatchConfiguration.baseURL)?.absoluteURL else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
