@@ -4,11 +4,11 @@ Este repositório é uma cópia de trabalho independente do projeto original [Ya
 
 ## Compilação e sincronização remota
 
-O projeto exige macOS, Xcode e o SDK iOS. O workflow [Build iOS app](.github/workflows/build-ios.yml) compila o target `3105` em `Release` e publica o artefato `x-ios-ipa` no run do GitHub Actions por 14 dias.
+O projeto exige macOS, Xcode e o SDK iOS. O workflow [Build iOS app](.github/workflows/build-ios.yml) compila o target `3105` em `Release` e publica o artefato `x-ios-ipa`, contendo somente `X.ipa`, no run do GitHub Actions por 14 dias. O log bruto do Xcode não é anexado ao artefato.
 
 Antes do build, configure em **Settings → Secrets and variables → Actions** o segredo de repositório chamado exatamente `PATCH_SYNC_TOKEN`, com o novo token de sincronização do backend. Atalho para a tela: [Actions secrets do repositório](https://github.com/bts2019amo-ctrl/3105-public-build-20260918-copy/settings/secrets/actions). Não use a senha do Gmail/Manus. O workflow escreve o valor somente em um `.xcconfig` temporário no runner e o expande no `Info.plist` da compilação; o token não fica no código-fonte. O workflow falha com uma mensagem clara se o segredo estiver ausente ou for curto demais.
 
-O token é incorporado ao binário iOS porque o cliente precisa autenticar as chamadas ao feed; como qualquer credencial estática dentro de um app, ele pode ser extraído por engenharia reversa e não deve ser tratado como segredo impossível de obter. Se for exposto, deve ser rotacionado no backend e no GitHub Actions.
+O token é incorporado ao binário iOS porque o cliente precisa autenticar as chamadas ao feed. Como qualquer credencial estática em um app, ele pode ser extraído por engenharia reversa: trate-o como uma credencial de cliente limitada ao feed/heartbeat, não como segredo confidencial perante quem recebe a IPA. A administração continua protegida por OAuth. Rotacionar esse token exige atualizar o secret do GitHub Actions e gerar/distribuir uma nova IPA.
 
 ## Instalação
 

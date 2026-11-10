@@ -79,6 +79,5 @@ jobs:
           name: x-ios-ipa
           path: |
             ${{ runner.temp }}/X.ipa
-            ${{ runner.temp }}/xcodebuild.log
           if-no-files-found: error
           retention-days: 14
