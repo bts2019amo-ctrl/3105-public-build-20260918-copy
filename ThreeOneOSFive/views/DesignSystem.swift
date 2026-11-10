@@ -176,7 +176,7 @@ extension View {
 }
 
 /// A low-cost, decorative constellation field used behind app surfaces.
-/// Motion is deliberately slow and automatically becomes static when Reduce Motion is enabled.
+    /// Motion is intentionally visible and automatically becomes static when Reduce Motion is enabled.
 struct ParticleFieldBackground: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -194,9 +194,9 @@ struct ParticleFieldBackground: View {
                         Self.drawConstellation(in: &context, size: size, phase: 0)
                     }
                 } else {
-                    TimelineView(.animation(minimumInterval: 1.0 / 16.0)) { timeline in
+                    TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
                         Canvas { context, size in
-                            let phase = timeline.date.timeIntervalSinceReferenceDate * 0.12
+                            let phase = timeline.date.timeIntervalSinceReferenceDate * 1.35
                             Self.drawConstellation(in: &context, size: size, phase: phase)
                         }
                     }
@@ -215,8 +215,8 @@ struct ParticleFieldBackground: View {
             let seed = Double(index)
             let baseX = (seed * 0.61803398875).truncatingRemainder(dividingBy: 1)
             let baseY = (seed * 0.75487766625 + 0.17).truncatingRemainder(dividingBy: 1)
-            let driftX = sin(phase + seed * 1.73) * 0.018
-            let driftY = cos(phase * 0.83 + seed * 1.21) * 0.018
+            let driftX = sin(phase + seed * 1.73) * 0.075
+            let driftY = cos(phase * 0.83 + seed * 1.21) * 0.075
             return CGPoint(
                 x: CGFloat(min(1, max(0, baseX + driftX))) * size.width,
                 y: CGFloat(min(1, max(0, baseY + driftY))) * size.height
