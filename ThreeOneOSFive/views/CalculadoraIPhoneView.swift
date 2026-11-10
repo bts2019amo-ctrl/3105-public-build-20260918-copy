@@ -200,7 +200,7 @@ struct CalculadoraIPhoneView: View {
 
     private func porcentagem() {
         var value = pegarDisplay() / 100
-        if let op = currentOp, (op as AnyObject) === ((+) as AnyObject) || (op as AnyObject) === ((-) as AnyObject) {
+        if let op = currentOp, op(2, 3) == 5 || op(2, 3) == -1 {
             // no original: se for + ou - multiplica pelo num1
             value = num1 * value
         }
