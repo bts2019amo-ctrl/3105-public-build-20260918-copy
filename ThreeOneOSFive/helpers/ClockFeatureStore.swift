@@ -312,9 +312,13 @@ final class ClockFeatureStore: ObservableObject {
 
         notificationCenter.removePendingNotificationRequests(withIdentifiers: [timerNotificationIdentifier])
         cancelAlarmKit(id: Self.timerAlarmID)
-        if alarmKitAllowed, await scheduleTimerWithAlarmKit(duration: selectedDuration) {
-            return true
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *) {
+            if alarmKitAllowed, await scheduleTimerWithAlarmKit(duration: selectedDuration) {
+                return true
+            }
         }
+#endif
 
         if !notificationsAllowed {
             notificationsAllowed = await requestNotificationAuthorization()
@@ -548,7 +552,7 @@ final class ClockFeatureStore: ObservableObject {
     private func alarmAttributes(title: String, sound: ClockAlarmSound) -> AlarmAttributes<ClockAlarmMetadata> {
         let alert = AlarmPresentation.Alert(
             title: LocalizedStringResource(stringLiteral: title),
-            stopButton: .stopButton,
+            stopButton: AlarmButton(text: "Parar", textColor: .white, systemImageName: "stop.circle"),
             secondaryButton: nil,
             secondaryButtonBehavior: nil
         )
