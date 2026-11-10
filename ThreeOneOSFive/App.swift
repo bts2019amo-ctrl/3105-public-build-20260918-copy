@@ -93,7 +93,10 @@ struct ThreeOneOSFiveApp: App {
                 }
             }
             .onChange(of: hasEnteredApp) { entered in
-                if entered && keySession.isAuthenticated { activateAuthenticatedServices() }
+                if entered {
+                    keySession.passCalculatorGate()
+                    if keySession.isAuthenticated { activateAuthenticatedServices() }
+                }
             }
             .onChange(of: scenePhase) { phase in
                 guard phase == .active, hasEnteredApp, keySession.isAuthenticated else { return }
@@ -111,6 +114,12 @@ struct ThreeOneOSFiveApp: App {
                 }
             }
             .onOpenURL { url in
+                let isLoginLink = url.scheme?.lowercased() == "threeoneosfive"
+                    && (url.host?.lowercased() == "login" || url.path.lowercased() == "/login")
+                if isLoginLink {
+                    withAnimation(.easeInOut(duration: 0.22)) { hasEnteredApp = true }
+                    return
+                }
                 guard hasEnteredApp, keySession.isAuthenticated else { return }
                 patchDraftCoordinator.presentImport(url)
             }
@@ -204,6 +213,7 @@ final class IOSKeySession: ObservableObject {
     private static let expectedBundleIdentifier = "com.apple.mobile.MobileHouseArrest"
     private var storedKey: String?
     private var monitorTask: Task<Void, Never>?
+    private var didPassCalculatorGate = false
 
     init() {
         storedKey = Self.readKeychain()
@@ -226,19 +236,25 @@ final class IOSKeySession: ObservableObject {
                 await self?.refresh()
             }
         }
-        if storedKey != nil { Task { await refresh() } }
     }
 
     deinit { monitorTask?.cancel() }
 
+    func passCalculatorGate() {
+        guard !didPassCalculatorGate else { return }
+        didPassCalculatorGate = true
+        if storedKey != nil { Task { await refresh() } }
+    }
+
     func submit(_ rawKey: String) {
+        guard didPassCalculatorGate else { return }
         let key = rawKey.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !key.isEmpty else { errorMessage = "Digite sua chave iOS."; return }
         Task { await validate(key, saveOnSuccess: true) }
     }
 
     func refresh() async {
-        guard !isChecking, let storedKey, !storedKey.isEmpty else { return }
+        guard didPassCalculatorGate, !isChecking, let storedKey, !storedKey.isEmpty else { return }
         await validate(storedKey, saveOnSuccess: false)
     }
 
