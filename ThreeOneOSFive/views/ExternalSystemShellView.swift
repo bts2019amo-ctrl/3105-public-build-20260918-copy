@@ -1500,6 +1500,8 @@ private struct DeltaReferenceSettingsTab: View {
     let keySession: IOSKeySession
     @AppStorage("externalSystem.streamProofEnabled") private var streamProof = false
     @State private var copied = false
+    @State private var stealthRunning = false
+    @State private var stealthDone = false
     private var deviceUID: String {
         UIDevice.current.identifierForVendor?.uuidString.uppercased() ?? "UNAVAILABLE"
     }
@@ -1509,6 +1511,41 @@ private struct DeltaReferenceSettingsTab: View {
             DeltaCard {
                 DeltaSectionTitle(isVietnamese ? "QUYá»N RIÃNG TÆ¯" : "PRIVACY", icon: "video.slash.fill")
                 DeltaToggleRow(isVietnamese ? "Chá»ng stream" : "Stream Proof", isOn: $streamProof)
+            }
+            DeltaCard {
+                DeltaSectionTitle("MODO FANTASMA", icon: "eye.slash.fill")
+                Text("Oculta o app e limpa os rastros locais do dispositivo.")
+                    .font(.caption)
+                    .foregroundStyle(DeltaColors.muted)
+                Button {
+                    guard !stealthRunning else { return }
+                    stealthRunning = true
+                    stealthDone = false
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        ST_fullStealthPass()
+                        DispatchQueue.main.async {
+                            stealthRunning = false
+                            stealthDone = true
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        if stealthRunning {
+                            ProgressView().tint(.white)
+                        } else {
+                            Image(systemName: stealthDone ? "checkmark.shield.fill" : "eye.slash")
+                        }
+                        Text(stealthRunning ? "Aplicando..." : (stealthDone ? "Fantasma Ativo" : "Ativar Modo Fantasma"))
+                        Spacer()
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background((stealthDone ? Color.green : DeltaColors.accent).opacity(0.24), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(stealthRunning)
             }
             DeltaCard {
                 DeltaSectionTitle(isVietnamese ? "THÃNG TIN Báº¢N QUYá»N" : "LICENSE INFORMATION", icon: "key.fill")
