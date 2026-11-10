@@ -19,6 +19,7 @@ struct ClockTimerView: View {
     var body: some View {
         VStack(spacing: 18) {
             titleBlock
+            soundPickerControl
 
             if hasTimerValue {
                 timerDisplay
@@ -51,7 +52,6 @@ struct ClockTimerView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
-        .background(Color.black)
         .task(id: clockStore.timerIsRunning) {
             guard clockStore.timerIsRunning else { return }
             while !Task.isCancelled && clockStore.timerIsRunning {
@@ -99,6 +99,50 @@ struct ClockTimerView: View {
         .padding(.top, 24)
     }
 
+    private var soundPickerControl: some View {
+        HStack(spacing: 9) {
+            Menu {
+                ForEach(ClockAlarmSound.allCases) { tone in
+                    Button {
+                        clockStore.setTimerSound(tone)
+                        clockStore.previewSound(tone)
+                    } label: {
+                        Label(tone.title, systemImage: tone.symbolName)
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "music.note")
+                        .foregroundStyle(AppTheme.accent)
+                    Text("Som: \(clockStore.timerSound.title)")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white)
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .liquidGlass(in: Capsule(), tint: AppTheme.accent, opacity: 0.09, interactive: true)
+            }
+            .disabled(clockStore.timerIsRunning)
+            .accessibilityLabel("Selecionar som do timer: \(clockStore.timerSound.title)")
+
+            Button { clockStore.previewSound(clockStore.timerSound) } label: {
+                Image(systemName: "play.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .liquidGlass(in: Circle(), tint: AppTheme.accent, opacity: 0.12, interactive: true)
+            }
+            .buttonStyle(.plain)
+            .disabled(clockStore.timerIsRunning)
+            .accessibilityLabel("Ouvir som do timer")
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 20)
+    }
+
     private var durationPicker: some View {
         HStack(spacing: 0) {
             wheelPicker(selection: $selectedHours, range: 0...23, suffix: "h")
@@ -107,7 +151,7 @@ struct ClockTimerView: View {
         }
         .frame(height: 220)
         .padding(.horizontal, 12)
-        .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .liquidGlassCard(cornerRadius: 20, tint: AppTheme.accent, opacity: 0.055)
         .padding(.horizontal, 20)
         .accessibilityElement(children: .contain)
     }
@@ -154,6 +198,7 @@ struct ClockTimerView: View {
                         .accessibilityLabel("Tempo restante: \(ClockTimeFormat.spoken(remaining))")
                 }
                 .frame(width: 258, height: 258)
+                .liquidGlass(in: Circle(), tint: AppTheme.accent, opacity: 0.075)
                 .padding(.horizontal, 20)
 
                 Text(clockStore.timerIsRunning ? "EM CONTAGEM" : (clockStore.timerCompleted ? "CONCLUÍDO" : "PAUSADO"))
@@ -172,7 +217,7 @@ struct ClockTimerView: View {
                 .foregroundStyle(foreground)
                 .frame(maxWidth: .infinity)
                 .frame(height: 54)
-                .background(tint, in: Capsule())
+                .liquidGlass(in: Capsule(), tint: tint, opacity: 0.22, interactive: true)
         }
         .buttonStyle(.plain)
     }
@@ -256,9 +301,9 @@ struct ClockStopwatchView: View {
             lapList
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.horizontal, 20)
+                .liquidGlassCard(cornerRadius: 18, tint: AppTheme.accent, opacity: 0.045)
                 .padding(.bottom, 12)
         }
-        .background(Color.black)
     }
 
     private var lapList: some View {
@@ -315,7 +360,7 @@ struct ClockStopwatchView: View {
                 .foregroundStyle(foreground)
                 .frame(maxWidth: .infinity)
                 .frame(height: 54)
-                .background(tint, in: Capsule())
+                .liquidGlass(in: Capsule(), tint: tint, opacity: 0.22, interactive: true)
         }
         .buttonStyle(.plain)
     }

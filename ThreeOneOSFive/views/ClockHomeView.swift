@@ -1,10 +1,30 @@
 import SwiftUI
 
-private enum XClockTab: Hashable {
+private enum XClockTab: String, CaseIterable, Identifiable, Hashable {
     case world
     case alarms
     case timer
     case stopwatch
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .world: "Mundo"
+        case .alarms: "Alarme"
+        case .timer: "Timer"
+        case .stopwatch: "Cronômetro"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .world: "globe.americas"
+        case .alarms: "alarm"
+        case .timer: "timer"
+        case .stopwatch: "stopwatch"
+        }
+    }
 }
 
 struct ClockHomeView: View {
@@ -14,38 +34,41 @@ struct ClockHomeView: View {
     @State private var selectedTab: XClockTab = .world
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            TabView(selection: $selectedTab) {
-                ClockWorldView()
-                    .tabItem { Label("Mundo", systemImage: "globe.americas") }
-                    .tag(XClockTab.world)
-                ClockAlarmView()
-                    .tabItem { Label("Alarmes", systemImage: "alarm") }
-                    .tag(XClockTab.alarms)
-                ClockTimerView()
-                    .tabItem { Label("Timer", systemImage: "timer") }
-                    .tag(XClockTab.timer)
-                ClockStopwatchView()
-                    .tabItem { Label("Cronômetro", systemImage: "stopwatch") }
-                    .tag(XClockTab.stopwatch)
+        ZStack {
+            ParticleFieldBackground()
+
+            VStack(spacing: 0) {
+                header
+
+                Group {
+                    switch selectedTab {
+                    case .world:
+                        ClockWorldView()
+                    case .alarms:
+                        ClockAlarmView()
+                    case .timer:
+                        ClockTimerView()
+                    case .stopwatch:
+                        ClockStopwatchView()
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.18), value: selectedTab)
+
+                tabBar
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
             }
-            .toolbarBackground(Color.black, for: .tabBar)
-            .toolbarColorScheme(.dark, for: .tabBar)
         }
-        .background(Color.black.ignoresSafeArea())
         .tint(AppTheme.accent)
         .preferredColorScheme(.dark)
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
-            Image("BrandX")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 38, height: 38)
-                .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-                .accessibilityHidden(true)
+        HStack(spacing: 11) {
+            AppLogo(size: 38)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("RELÓGIO")
@@ -66,23 +89,50 @@ struct ClockHomeView: View {
                     Image(systemName: "arrow.right")
                         .font(.system(size: 12, weight: .bold))
                 }
-                .foregroundStyle(.black)
+                .foregroundStyle(.white)
                 .padding(.horizontal, 15)
-                .padding(.vertical, 11)
-                .background(AppTheme.accent, in: Capsule())
+                .padding(.vertical, 10)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ClockGlassButtonStyle(tint: AppTheme.accent))
             .accessibilityLabel("Continuar para o login e os patches")
         }
         .padding(.horizontal, 18)
         .padding(.top, 8)
         .padding(.bottom, 10)
-        .background(Color.black)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Color.white.opacity(0.10))
-                .frame(height: 0.5)
+    }
+
+    private var tabBar: some View {
+        HStack(spacing: 4) {
+            ForEach(XClockTab.allCases) { tab in
+                Button {
+                    selectedTab = tab
+                } label: {
+                    VStack(spacing: 5) {
+                        Image(systemName: tab.symbol)
+                            .font(.system(size: 16, weight: .semibold))
+                            .frame(height: 18)
+                        Text(tab.title)
+                            .font(.system(size: 9, weight: .semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                    .foregroundStyle(selectedTab == tab ? .white : Color.white.opacity(0.62))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .liquidGlass(
+                        in: Capsule(),
+                        tint: selectedTab == tab ? AppTheme.accent : .white,
+                        opacity: selectedTab == tab ? 0.16 : 0.035,
+                        interactive: true
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(tab.title)
+                .accessibilityAddTraits(selectedTab == tab ? .isSelected : [])
+            }
         }
+        .padding(5)
+        .liquidGlass(in: Capsule(), tint: AppTheme.accent, opacity: 0.08)
     }
 }
 
@@ -103,49 +153,38 @@ private struct ClockWorldView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button(isEditing ? "Concluir" : "Editar") {
+                Button {
                     withAnimation(.easeInOut(duration: 0.18)) { isEditing.toggle() }
+                } label: {
+                    Text(isEditing ? "Concluir" : "Editar")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppTheme.accent)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
                 }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(AppTheme.accent)
+                .buttonStyle(ClockGlassButtonStyle(tint: AppTheme.accent))
                 .accessibilityLabel(isEditing ? "Concluir edição dos relógios" : "Editar relógios")
             }
             .padding(.horizontal, 20)
             .padding(.top, 24)
             .padding(.bottom, 14)
 
-            TimelineView(.periodic(from: .now, by: 1)) { timeline in
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(clockStore.worldClocks) { city in
-                            worldClockRow(city, now: timeline.date)
-                            Rectangle()
-                                .fill(Color.white.opacity(0.11))
-                                .frame(height: 0.5)
-                                .padding(.leading, isEditing ? 58 : 0)
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 18)
-                }
-            }
-
             if clockStore.worldClocks.isEmpty {
-                VStack(spacing: 10) {
-                    Image(systemName: "globe")
-                        .font(.system(size: 30, weight: .light))
-                        .foregroundStyle(AppTheme.accent)
-                    Text("Sem relógios")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white)
-                    Text("Adicione uma cidade para acompanhar o horário local.")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                emptyState
+                    .padding(.horizontal, 20)
+                    .frame(maxHeight: .infinity)
+            } else {
+                TimelineView(.periodic(from: .now, by: 1)) { timeline in
+                    ScrollView {
+                        LazyVStack(spacing: 9) {
+                            ForEach(clockStore.worldClocks) { city in
+                                worldClockRow(city, now: timeline.date)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 18)
+                    }
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 28)
             }
 
             Button { showingCityPicker = true } label: {
@@ -153,14 +192,18 @@ private struct ClockWorldView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(AppTheme.accent)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 15)
-                    .background(Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .padding(.vertical, 14)
+                    .liquidGlass(
+                        in: RoundedRectangle(cornerRadius: 15, style: .continuous),
+                        tint: AppTheme.accent,
+                        opacity: 0.11,
+                        interactive: true
+                    )
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 20)
             .padding(.bottom, 16)
         }
-        .background(Color.black)
         .sheet(isPresented: $showingCityPicker) {
             ClockCityPicker(selectedTimeZones: Set(clockStore.worldClocks.map(\.timeZoneIdentifier))) { identifier in
                 clockStore.addWorldClock(timeZoneIdentifier: identifier)
@@ -169,14 +212,34 @@ private struct ClockWorldView: View {
         }
     }
 
-    @ViewBuilder
+    private var emptyState: some View {
+        VStack(spacing: 11) {
+            Image(systemName: "globe")
+                .font(.system(size: 31, weight: .light))
+                .foregroundStyle(AppTheme.accent)
+            Text("Sem relógios")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(.white)
+            Text("Adicione uma cidade para acompanhar o horário local.")
+                .font(.system(size: 14))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 30)
+        .liquidGlassCard(cornerRadius: 18, tint: AppTheme.accent, opacity: 0.06)
+    }
+
     private func worldClockRow(_ city: ClockWorldCity, now: Date) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 13) {
             if isEditing {
                 Button(role: .destructive) { clockStore.removeWorldClock(city) } label: {
-                    Image(systemName: "minus.circle.fill")
-                        .font(.system(size: 23))
+                    Image(systemName: "minus")
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.red)
+                        .frame(width: 36, height: 36)
+                        .liquidGlass(in: Circle(), tint: .red, opacity: 0.12, interactive: true)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Remover relógio de \(city.cityName)")
@@ -199,8 +262,10 @@ private struct ClockWorldView: View {
                 .contentTransition(.numericText())
                 .accessibilityLabel("Horário em \(city.cityName): \(timeText(for: city, at: now))")
         }
-        .padding(.vertical, 18)
-        .contentShape(Rectangle())
+        .padding(.horizontal, 15)
+        .padding(.vertical, 14)
+        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .liquidGlassCard(cornerRadius: 16, tint: AppTheme.accent, opacity: 0.05)
     }
 
     private func timeText(for city: ClockWorldCity, at date: Date) -> String {
@@ -253,10 +318,14 @@ private struct ClockCityPicker: View {
                     onSelect(identifier)
                     dismiss()
                 } label: {
-                    HStack {
+                    HStack(spacing: 10) {
+                        Image(systemName: "globe.americas.fill")
+                            .foregroundStyle(AppTheme.accent)
+                            .frame(width: 28, height: 28)
+                            .liquidGlass(in: Circle(), tint: AppTheme.accent, opacity: 0.10)
                         VStack(alignment: .leading, spacing: 3) {
                             Text(city.cityName)
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(.white)
                             Text(identifier)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -267,22 +336,34 @@ private struct ClockCityPicker: View {
                                 .foregroundStyle(AppTheme.accent)
                         }
                     }
-                    .contentShape(Rectangle())
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .liquidGlassCard(cornerRadius: 13, tint: AppTheme.accent, opacity: 0.04)
                 }
+                .buttonStyle(.plain)
                 .disabled(selectedTimeZones.contains(identifier))
-                .listRowBackground(Color(red: 0.07, green: 0.07, blue: 0.07))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
+            .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .background(Color.black)
+            .background(Color.clear)
             .searchable(text: $searchText, prompt: "Buscar cidade ou fuso")
             .navigationTitle("Adicionar cidade")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancelar") { dismiss() }
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppTheme.accent)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .liquidGlass(in: Capsule(), tint: AppTheme.accent, opacity: 0.08, interactive: true)
                 }
             }
         }
+        .background(ParticleFieldBackground())
         .presentationDetents([.medium, .large])
     }
 }

@@ -92,40 +92,80 @@ struct AppCardBorder: View {
     }
 }
 
+struct LiquidGlassSurface<S: Shape>: ViewModifier {
+    let shape: S
+    var tint: Color = .white
+    var opacity: Double = 0.14
+    var interactive = false
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        Group {
+            if #available(iOS 26.0, *) {
+                if interactive {
+                    content
+                        .background(tint.opacity(opacity * 0.35), in: shape)
+                        .glassEffect(.regular.interactive(), in: shape)
+                } else {
+                    content
+                        .background(tint.opacity(opacity * 0.35), in: shape)
+                        .glassEffect(.regular, in: shape)
+                }
+            } else {
+                content
+                    .background(.ultraThinMaterial, in: shape)
+                    .background(tint.opacity(opacity * 0.34), in: shape)
+            }
+        }
+        .overlay {
+            shape.stroke(
+                LinearGradient(
+                    colors: [.white.opacity(0.24), .white.opacity(0.035)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: 0.8
+            )
+        }
+        .shadow(color: .black.opacity(0.30), radius: 14, y: 7)
+    }
+}
+
 struct LiquidGlassCardModifier: ViewModifier {
     var cornerRadius: CGFloat = AppTheme.contentCardCornerRadius
     var tint: Color = .white
     var opacity: Double = 0.14
 
     func body(content: Content) -> some View {
-        content
-            .background(Color(red: 0.075, green: 0.075, blue: 0.075).opacity(0.82), in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .background(tint.opacity(opacity * 0.34), in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [.white.opacity(0.22), .white.opacity(0.04)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.8
-                    )
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: cornerRadius - 1, style: .continuous)
-                    .stroke(.white.opacity(0.14), lineWidth: 3)
-                    .blur(radius: 2)
-                    .mask(
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(LinearGradient(colors: [.white, .clear], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    )
-            }
-            .shadow(color: .black.opacity(0.38), radius: 16, y: 8)
+        content.liquidGlass(
+            in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous),
+            tint: tint,
+            opacity: opacity
+        )
+    }
+}
+
+struct ClockGlassButtonStyle: ButtonStyle {
+    var tint: Color = AppTheme.accent
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .liquidGlass(in: Capsule(), tint: tint, opacity: 0.14, interactive: true)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.14), value: configuration.isPressed)
     }
 }
 
 extension View {
+    func liquidGlass<S: Shape>(
+        in shape: S,
+        tint: Color = .white,
+        opacity: Double = 0.14,
+        interactive: Bool = false
+    ) -> some View {
+        modifier(LiquidGlassSurface(shape: shape, tint: tint, opacity: opacity, interactive: interactive))
+    }
+
     func liquidGlassCard(
         cornerRadius: CGFloat = AppTheme.contentCardCornerRadius,
         tint: Color = .white,

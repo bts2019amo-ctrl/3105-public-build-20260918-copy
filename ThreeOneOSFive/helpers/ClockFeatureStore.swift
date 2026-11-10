@@ -1,6 +1,62 @@
 import Foundation
 import Combine
+import SwiftUI
+import AVFoundation
 import UserNotifications
+#if canImport(AlarmKit)
+import AlarmKit
+import ActivityKit
+#endif
+
+enum ClockAlarmSound: String, CaseIterable, Codable, Identifiable {
+    case brisa
+    case pulsar
+    case aurora
+
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
+    var fileName: String { title + ".caf" }
+
+    var subtitle: String {
+        switch self {
+        case .brisa: "Piano e celesta, suave e nítido"
+        case .pulsar: "Marimba e kalimba, acolhedor"
+        case .aurora: "Sinte e sinos, claro e otimista"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .brisa: "pianokeys"
+        case .pulsar: "waveform"
+        case .aurora: "sparkles"
+        }
+    }
+}
+
+#if canImport(AlarmKit)
+@available(iOS 26.0, *)
+private struct ClockAlarmMetadata: AlarmMetadata {
+    let label: String
+    let soundID: String
+}
+#endif
+
+private final class ClockNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    static let shared = ClockNotificationDelegate()
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        if notification.request.identifier.hasPrefix("x.clock.") {
+            completionHandler([.sound])
+        } else {
+            completionHandler([.banner, .list, .sound])
+        }
+    }
+}
 
 struct ClockWorldCity: Codable, Identifiable, Equatable {
     let timeZoneIdentifier: String
@@ -23,12 +79,63 @@ struct ClockWorldCity: Codable, Identifiable, Equatable {
 }
 
 struct ClockAlarm: Codable, Identifiable, Equatable {
-    var id: UUID = UUID()
+    var id: UUID
     var hour: Int
     var minute: Int
-    var label: String = ""
-    var weekdays: [Int] = []
-    var isEnabled: Bool = true
+    var label: String
+    var weekdays: [Int]
+    var isEnabled: Bool
+    var sound: ClockAlarmSound
+
+    init(
+        id: UUID = UUID(),
+        hour: Int,
+        minute: Int,
+        label: String = "",
+        weekdays: [Int] = [],
+        isEnabled: Bool = true,
+        sound: ClockAlarmSound = .brisa
+    ) {
+        self.id = id
+        self.hour = hour
+        self.minute = minute
+        self.label = label
+        self.weekdays = weekdays
+        self.isEnabled = isEnabled
+        self.sound = sound
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case hour
+        case minute
+        case label
+        case weekdays
+        case isEnabled
+        case sound
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        hour = try values.decode(Int.self, forKey: .hour)
+        minute = try values.decode(Int.self, forKey: .minute)
+        label = try values.decodeIfPresent(String.self, forKey: .label) ?? ""
+        weekdays = try values.decodeIfPresent([Int].self, forKey: .weekdays) ?? []
+        isEnabled = try values.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? true
+        sound = try values.decodeIfPresent(ClockAlarmSound.self, forKey: .sound) ?? .brisa
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(id, forKey: .id)
+        try values.encode(hour, forKey: .hour)
+        try values.encode(minute, forKey: .minute)
+        try values.encode(label, forKey: .label)
+        try values.encode(weekdays, forKey: .weekdays)
+        try values.encode(isEnabled, forKey: .isEnabled)
+        try values.encode(sound, forKey: .sound)
+    }
 
     var timeText: String {
         String(format: "%02d:%02d", hour, minute)
@@ -60,6 +167,7 @@ final class ClockFeatureStore: ObservableObject {
     @Published private(set) var alarms: [ClockAlarm] = []
     @Published private(set) var timerIsRunning = false
     @Published private(set) var timerCompleted = false
+    @Published private(set) var timerSound: ClockAlarmSound = .brisa
     @Published private(set) var stopwatchIsRunning = false
     @Published private(set) var stopwatchLaps: [ClockStopwatchLap] = []
 
@@ -68,12 +176,15 @@ final class ClockFeatureStore: ObservableObject {
     private(set) var timerDeadline: Date?
     private var stopwatchAccumulated: TimeInterval = 0
     private var stopwatchStartDate: Date?
+    private var previewPlayer: AVAudioPlayer?
 
     private let defaults: UserDefaults
     private let persistenceKey = "x.clock.features.state.v1"
+    private let timerSoundPersistenceKey = "x.clock.timer.sound.v1"
     private let notificationCenter = UNUserNotificationCenter.current()
     private let alarmNotificationPrefix = "x.clock.alarm."
     private let timerNotificationIdentifier = "x.clock.timer"
+    private static let timerAlarmID = UUID(uuidString: "a6f17243-5299-4a8b-a088-b39381001001")!
 
     private struct PersistedState: Codable {
         var version: Int = 1
@@ -91,7 +202,9 @@ final class ClockFeatureStore: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        notificationCenter.delegate = ClockNotificationDelegate.shared
         restoreState()
+        timerSound = ClockAlarmSound(rawValue: defaults.string(forKey: timerSoundPersistenceKey) ?? "") ?? .brisa
         Task { await restoreAlarmNotifications() }
     }
 
@@ -107,10 +220,33 @@ final class ClockFeatureStore: ObservableObject {
         persist()
     }
 
+    func setTimerSound(_ sound: ClockAlarmSound) {
+        timerSound = sound
+        defaults.set(sound.rawValue, forKey: timerSoundPersistenceKey)
+    }
+
+    func previewSound(_ sound: ClockAlarmSound) {
+        guard let url = Bundle.main.url(forResource: sound.title, withExtension: "caf") else { return }
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            previewPlayer?.stop()
+            previewPlayer = try AVAudioPlayer(contentsOf: url)
+            previewPlayer?.prepareToPlay()
+            previewPlayer?.play()
+        } catch {
+            previewPlayer = nil
+        }
+    }
+
+    func stopSoundPreview() {
+        previewPlayer?.stop()
+        previewPlayer = nil
+    }
+
     func saveAlarm(_ alarm: ClockAlarm) async -> ClockAlarmSaveResult {
         if alarm.isEnabled {
-            let notificationsAllowed = await requestNotificationAuthorization()
-            guard notificationsAllowed else { return .notificationsDenied }
+            let deliveryAllowed = await requestAlarmDeliveryAuthorization()
+            guard deliveryAllowed else { return .notificationsDenied }
         }
 
         let nextAlarms = replacing(alarm, in: alarms)
@@ -129,8 +265,8 @@ final class ClockFeatureStore: ObservableObject {
     func setAlarmEnabled(id: UUID, isEnabled: Bool) async -> ClockAlarmSaveResult {
         guard let existing = alarms.first(where: { $0.id == id }) else { return .saved }
         if isEnabled {
-            let notificationsAllowed = await requestNotificationAuthorization()
-            guard notificationsAllowed else { return .notificationsDenied }
+            let deliveryAllowed = await requestAlarmDeliveryAuthorization()
+            guard deliveryAllowed else { return .notificationsDenied }
         }
 
         var updated = existing
@@ -160,7 +296,13 @@ final class ClockFeatureStore: ObservableObject {
         let selectedDuration = seconds ?? timerPausedRemaining
         guard selectedDuration > 0 else { return false }
 
-        let notificationAllowed = await requestNotificationAuthorization()
+        let alarmKitAllowed = await requestAlarmKitAuthorization()
+        var notificationsAllowed = false
+        if !alarmKitAllowed {
+            notificationsAllowed = await requestNotificationAuthorization()
+        }
+        guard alarmKitAllowed || notificationsAllowed else { return false }
+
         timerDuration = seconds ?? max(timerDuration, selectedDuration)
         timerPausedRemaining = selectedDuration
         timerDeadline = Date().addingTimeInterval(selectedDuration)
@@ -169,16 +311,32 @@ final class ClockFeatureStore: ObservableObject {
         persist()
 
         notificationCenter.removePendingNotificationRequests(withIdentifiers: [timerNotificationIdentifier])
-        if notificationAllowed {
-            let content = UNMutableNotificationContent()
-            content.title = "Timer finalizado"
-            content.body = "O tempo definido chegou ao fim."
-            content.sound = .default
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, selectedDuration), repeats: false)
-            let request = UNNotificationRequest(identifier: timerNotificationIdentifier, content: content, trigger: trigger)
-            try? await notificationCenter.add(request)
+        cancelAlarmKit(id: Self.timerAlarmID)
+        if alarmKitAllowed, await scheduleTimerWithAlarmKit(duration: selectedDuration) {
+            return true
         }
-        return notificationAllowed
+
+        if !notificationsAllowed {
+            notificationsAllowed = await requestNotificationAuthorization()
+        }
+        guard notificationsAllowed else {
+            cancelTimer()
+            return false
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Timer finalizado"
+        content.body = "O tempo definido chegou ao fim."
+        content.sound = notificationSound(for: timerSound)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, selectedDuration), repeats: false)
+        let request = UNNotificationRequest(identifier: timerNotificationIdentifier, content: content, trigger: trigger)
+        do {
+            try await notificationCenter.add(request)
+            return true
+        } catch {
+            cancelTimer()
+            return false
+        }
     }
 
     func pauseTimer() {
@@ -187,11 +345,13 @@ final class ClockFeatureStore: ObservableObject {
         timerDeadline = nil
         timerIsRunning = false
         notificationCenter.removePendingNotificationRequests(withIdentifiers: [timerNotificationIdentifier])
+        cancelAlarmKit(id: Self.timerAlarmID)
         persist()
     }
 
     func cancelTimer() {
         notificationCenter.removePendingNotificationRequests(withIdentifiers: [timerNotificationIdentifier])
+        cancelAlarmKit(id: Self.timerAlarmID)
         timerIsRunning = false
         timerCompleted = false
         timerDuration = 0
@@ -213,6 +373,8 @@ final class ClockFeatureStore: ObservableObject {
 
     func dismissTimerCompletion() {
         timerCompleted = false
+        stopAlarmKit(id: Self.timerAlarmID)
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: [timerNotificationIdentifier])
         persist()
     }
 
@@ -265,6 +427,32 @@ final class ClockFeatureStore: ObservableObject {
         }
     }
 
+    private func requestAlarmDeliveryAuthorization() async -> Bool {
+        if await requestAlarmKitAuthorization() { return true }
+        return await requestNotificationAuthorization()
+    }
+
+    private func requestAlarmKitAuthorization() async -> Bool {
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *) {
+            let manager = AlarmManager.shared
+            if manager.authorizationState == .authorized { return true }
+            guard manager.authorizationState == .notDetermined else { return false }
+            return (try? await manager.requestAuthorization()) == .authorized
+        }
+#endif
+        return false
+    }
+
+    private func alarmKitIsAuthorized() -> Bool {
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *) {
+            return AlarmManager.shared.authorizationState == .authorized
+        }
+#endif
+        return false
+    }
+
     private func requestNotificationAuthorization() async -> Bool {
         let settings = await notificationCenter.notificationSettings()
         switch settings.authorizationStatus {
@@ -281,24 +469,39 @@ final class ClockFeatureStore: ObservableObject {
 
     private func restoreAlarmNotifications() async {
         let settings = await notificationCenter.notificationSettings()
-        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else { return }
+        let localNotificationsAllowed = settings.authorizationStatus == .authorized
+            || settings.authorizationStatus == .provisional
+            || settings.authorizationStatus == .ephemeral
+        guard localNotificationsAllowed || alarmKitIsAuthorized() else { return }
         await scheduleAllAlarmNotifications()
     }
 
     private func scheduleAllAlarmNotifications() async {
         let allKnownIdentifiers = alarms.flatMap { possibleAlarmNotificationIdentifiers(for: $0.id) }
         notificationCenter.removePendingNotificationRequests(withIdentifiers: allKnownIdentifiers)
-        for alarm in alarms where alarm.isEnabled {
-            await scheduleAlarmNotifications(for: alarm)
+        for alarm in alarms {
+            if alarm.isEnabled {
+                await scheduleAlarmNotifications(for: alarm)
+            } else {
+                await removeAlarmNotifications(for: alarm.id)
+            }
         }
     }
 
     private func scheduleAlarmNotifications(for alarm: ClockAlarm) async {
         guard alarm.isEnabled else { return }
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *), await scheduleAlarmWithAlarmKit(for: alarm) {
+            notificationCenter.removePendingNotificationRequests(withIdentifiers: possibleAlarmNotificationIdentifiers(for: alarm.id))
+            return
+        }
+#endif
+        guard await requestNotificationAuthorization() else { return }
+
         let content = UNMutableNotificationContent()
         content.title = alarm.label.isEmpty ? "Alarme" : alarm.label
         content.body = "Está na hora."
-        content.sound = .default
+        content.sound = notificationSound(for: alarm.sound)
 
         if alarm.weekdays.isEmpty {
             var matching = DateComponents()
@@ -329,10 +532,108 @@ final class ClockFeatureStore: ObservableObject {
 
     private func removeAlarmNotifications(for id: UUID) async {
         notificationCenter.removePendingNotificationRequests(withIdentifiers: possibleAlarmNotificationIdentifiers(for: id))
+        cancelAlarmKit(id: id)
     }
 
     private func possibleAlarmNotificationIdentifiers(for id: UUID) -> [String] {
         [alarmNotificationPrefix + id.uuidString] + (1...7).map { alarmNotificationPrefix + id.uuidString + "." + String($0) }
+    }
+
+    private func notificationSound(for sound: ClockAlarmSound) -> UNNotificationSound {
+        UNNotificationSound(named: UNNotificationSoundName(rawValue: sound.fileName))
+    }
+
+#if canImport(AlarmKit)
+    @available(iOS 26.0, *)
+    private func alarmAttributes(title: String, sound: ClockAlarmSound) -> AlarmAttributes<ClockAlarmMetadata> {
+        let alert = AlarmPresentation.Alert(
+            title: LocalizedStringResource(stringLiteral: title),
+            stopButton: .stopButton,
+            secondaryButton: nil,
+            secondaryButtonBehavior: nil
+        )
+        return AlarmAttributes<ClockAlarmMetadata>(
+            presentation: AlarmPresentation(alert: alert),
+            metadata: ClockAlarmMetadata(label: title, soundID: sound.rawValue),
+            tintColor: Color.white
+        )
+    }
+
+    @available(iOS 26.0, *)
+    private func scheduleAlarmWithAlarmKit(for alarm: ClockAlarm) async -> Bool {
+        guard alarmKitIsAuthorized() else { return false }
+        do {
+            let existingAlarms = try AlarmManager.shared.alarms
+            if existingAlarms.contains(where: { $0.id == alarm.id }) { return true }
+        } catch {
+            return false
+        }
+
+        let selectedWeekdays = Set(alarm.weekdays.compactMap { weekday -> Locale.Weekday? in
+            switch weekday {
+            case 1: .sunday
+            case 2: .monday
+            case 3: .tuesday
+            case 4: .wednesday
+            case 5: .thursday
+            case 6: .friday
+            case 7: .saturday
+            default: nil
+            }
+        })
+        let time = Alarm.Schedule.Relative.Time(hour: alarm.hour, minute: alarm.minute)
+        let recurrence: Alarm.Schedule.Relative.Recurrence = selectedWeekdays.isEmpty
+            ? .never
+            : .weekly(Array(selectedWeekdays))
+        let schedule = Alarm.Schedule.relative(.init(time: time, repeats: recurrence))
+        let title = alarm.label.isEmpty ? "Alarme" : alarm.label
+        let attributes = alarmAttributes(title: title, sound: alarm.sound)
+        let configuration = AlarmManager.AlarmConfiguration.alarm(
+            schedule: schedule,
+            attributes: attributes,
+            sound: AlertConfiguration.AlertSound.named(alarm.sound.fileName)
+        )
+
+        do {
+            _ = try await AlarmManager.shared.schedule(id: alarm.id, configuration: configuration)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    @available(iOS 26.0, *)
+    private func scheduleTimerWithAlarmKit(duration: TimeInterval) async -> Bool {
+        guard alarmKitIsAuthorized() else { return false }
+        let attributes = alarmAttributes(title: "Timer finalizado", sound: timerSound)
+        let configuration = AlarmManager.AlarmConfiguration.timer(
+            duration: duration,
+            attributes: attributes,
+            sound: AlertConfiguration.AlertSound.named(timerSound.fileName)
+        )
+        do {
+            _ = try await AlarmManager.shared.schedule(id: Self.timerAlarmID, configuration: configuration)
+            return true
+        } catch {
+            return false
+        }
+    }
+#endif
+
+    private func cancelAlarmKit(id: UUID) {
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *) {
+            try? AlarmManager.shared.cancel(id: id)
+        }
+#endif
+    }
+
+    private func stopAlarmKit(id: UUID) {
+#if canImport(AlarmKit)
+        if #available(iOS 26.0, *) {
+            try? AlarmManager.shared.stop(id: id)
+        }
+#endif
     }
 
     private func restoreState() {

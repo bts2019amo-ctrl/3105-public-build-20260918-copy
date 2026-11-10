@@ -23,7 +23,9 @@
     <key>CFBundleShortVersionString</key>
     <string>1.1.1</string>
     <key>CFBundleVersion</key>
-    <string>19</string>
+    <string>21</string>
+    <key>NSAlarmKitUsageDescription</key>
+    <string>O X agenda os alarmes e timers que você configura para tocar no horário escolhido.</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>

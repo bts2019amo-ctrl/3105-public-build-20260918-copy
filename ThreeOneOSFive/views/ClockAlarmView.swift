@@ -20,11 +20,16 @@ struct ClockAlarmView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button(isEditing ? "Concluir" : "Editar") {
+                Button {
                     withAnimation(.easeInOut(duration: 0.18)) { isEditing.toggle() }
+                } label: {
+                    Text(isEditing ? "Concluir" : "Editar")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppTheme.accent)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
                 }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(AppTheme.accent)
+                .buttonStyle(ClockGlassButtonStyle(tint: AppTheme.accent))
                 .accessibilityLabel(isEditing ? "Concluir edição dos alarmes" : "Editar alarmes")
             }
             .padding(.horizontal, 20)
@@ -50,14 +55,18 @@ struct ClockAlarmView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(AppTheme.accent)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 15)
-                    .background(Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .padding(.vertical, 14)
+                    .liquidGlass(
+                        in: RoundedRectangle(cornerRadius: 15, style: .continuous),
+                        tint: AppTheme.accent,
+                        opacity: 0.11,
+                        interactive: true
+                    )
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 20)
             .padding(.bottom, 16)
         }
-        .background(Color.black)
         .sheet(item: $alarmDraft) { draft in
             ClockAlarmEditor(
                 initialAlarm: draft,
@@ -65,6 +74,7 @@ struct ClockAlarmView: View {
                 onSave: { updated in await clockStore.saveAlarm(updated) },
                 onDelete: { id in await clockStore.deleteAlarm(id: id) }
             )
+            .environmentObject(clockStore)
             .preferredColorScheme(.dark)
         }
         .alert(item: $activeAlert) { alert in
@@ -86,9 +96,9 @@ struct ClockAlarmView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 42)
+        .padding(.vertical, 38)
         .padding(.horizontal, 24)
-        .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .liquidGlassCard(cornerRadius: 18, tint: AppTheme.accent, opacity: 0.06)
     }
 
     private func alarmRow(_ alarm: ClockAlarm) -> some View {
@@ -101,8 +111,10 @@ struct ClockAlarmView: View {
                     Text(alarm.label.isEmpty ? "Alarme" : alarm.label)
                     Text("·")
                     Text(alarm.repeatText)
+                    Text("·")
+                    Text(alarm.sound.title)
                 }
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
             }
@@ -117,11 +129,10 @@ struct ClockAlarmView: View {
                     Label("Editar", systemImage: "pencil")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(AppTheme.accent)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .background(Color.white.opacity(0.08), in: Capsule())
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 9)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ClockGlassButtonStyle(tint: AppTheme.accent))
                 .accessibilityLabel("Editar alarme das \(alarm.timeText)")
             } else {
                 Toggle("Ativo", isOn: Binding(
@@ -134,17 +145,13 @@ struct ClockAlarmView: View {
                     }
                 ))
                 .labelsHidden()
-                .tint(.green)
+                .tint(AppTheme.accent)
                 .accessibilityLabel(alarm.isEnabled ? "Desativar alarme das \(alarm.timeText)" : "Ativar alarme das \(alarm.timeText)")
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(Color(red: 0.075, green: 0.075, blue: 0.075), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.075), lineWidth: 1)
-        }
+        .padding(.horizontal, 15)
+        .padding(.vertical, 13)
+        .liquidGlassCard(cornerRadius: 16, tint: AppTheme.accent, opacity: alarm.isEnabled ? 0.055 : 0.025)
     }
 
     private func addAlarm() {
@@ -184,15 +191,15 @@ private func makeClockAlarmAlert(_ alert: ClockAlarmAlert, openSettings: @escapi
     switch alert {
     case .permission:
         return Alert(
-            title: Text("Notificações desativadas"),
-            message: Text("Permita notificações para X nos Ajustes para receber alarmes com o app fechado."),
+            title: Text("Alarmes sem autorização"),
+            message: Text("Permita alarmes ou notificações para X nos Ajustes para receber avisos com som quando o app estiver fechado."),
             primaryButton: .default(Text("Abrir Ajustes"), action: openSettings),
             secondaryButton: .cancel(Text("Agora não"))
         )
     case .limit:
         return Alert(
             title: Text("Limite de alarmes ativos"),
-            message: Text("O iOS limita a quantidade de alertas locais pendentes. Desative outros alarmes ou diminua os dias de repetição."),
+            message: Text("O iOS limita a quantidade de alarmes pendentes. Desative outros alarmes ou diminua os dias de repetição."),
             dismissButton: .default(Text("OK"))
         )
     }
@@ -200,10 +207,12 @@ private func makeClockAlarmAlert(_ alert: ClockAlarmAlert, openSettings: @escapi
 
 private struct ClockAlarmEditor: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var clockStore: ClockFeatureStore
     @State private var time: Date
     @State private var label: String
     @State private var weekdays: Set<Int>
     @State private var isEnabled: Bool
+    @State private var sound: ClockAlarmSound
     @State private var activeAlert: ClockAlarmAlert?
     @State private var isSaving = false
 
@@ -231,78 +240,117 @@ private struct ClockAlarmEditor: View {
         _label = State(initialValue: initialAlarm.label)
         _weekdays = State(initialValue: Set(initialAlarm.weekdays))
         _isEnabled = State(initialValue: initialAlarm.isEnabled)
+        _sound = State(initialValue: initialAlarm.sound)
     }
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Horário") {
-                    DatePicker("Hora", selection: $time, displayedComponents: .hourAndMinute)
-                        .datePickerStyle(.wheel)
-                        .labelsHidden()
-                        .frame(maxWidth: .infinity)
-                        .environment(\.locale, Locale(identifier: "pt_BR"))
-                }
-                .listRowBackground(Color(red: 0.075, green: 0.075, blue: 0.075))
+            ZStack {
+                ParticleFieldBackground()
+                ScrollView {
+                    VStack(spacing: 14) {
+                        sectionCard(title: "Horário") {
+                            DatePicker("Hora", selection: $time, displayedComponents: .hourAndMinute)
+                                .datePickerStyle(.wheel)
+                                .labelsHidden()
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 145)
+                                .environment(\.locale, Locale(identifier: "pt_BR"))
+                        }
 
-                Section("Repetir") {
-                    HStack(spacing: 8) {
-                        ForEach(dayNames, id: \.0) { weekday, name in
-                            let selected = weekdays.contains(weekday)
-                            Button {
-                                if selected { weekdays.remove(weekday) }
-                                else { weekdays.insert(weekday) }
+                        sectionCard(title: "Repetir") {
+                            HStack(spacing: 7) {
+                                ForEach(dayNames, id: \.0) { weekday, name in
+                                    let selected = weekdays.contains(weekday)
+                                    Button {
+                                        if selected { weekdays.remove(weekday) }
+                                        else { weekdays.insert(weekday) }
+                                    } label: {
+                                        Text(name)
+                                            .font(.system(size: 14, weight: .bold))
+                                            .foregroundStyle(selected ? .black : .white)
+                                            .frame(maxWidth: .infinity)
+                                            .frame(height: 39)
+                                            .liquidGlass(
+                                                in: Circle(),
+                                                tint: selected ? AppTheme.accent : .white,
+                                                opacity: selected ? 0.28 : 0.055,
+                                                interactive: true
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("\(fullDayName(weekday)) \(selected ? "selecionado" : "não selecionado")")
+                                }
+                            }
+                        }
+
+                        sectionCard(title: "Detalhes") {
+                            TextField("Nome do alarme (opcional)", text: $label)
+                                .textInputAutocapitalization(.sentences)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 11)
+                                .liquidGlass(
+                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous),
+                                    tint: .white,
+                                    opacity: 0.07,
+                                    interactive: true
+                                )
+                            Toggle("Alarme ativo", isOn: $isEnabled)
+                                .tint(AppTheme.accent)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .liquidGlass(
+                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous),
+                                    tint: AppTheme.accent,
+                                    opacity: 0.06
+                                )
+                        }
+
+                        sectionCard(title: "Som do alarme") {
+                            ClockSoundPicker(selection: $sound, onPreview: clockStore.previewSound)
+                        }
+
+                        if isExisting {
+                            Button(role: .destructive) {
+                                Task {
+                                    await onDelete(initialAlarm.id)
+                                    dismiss()
+                                }
                             } label: {
-                                Text(name)
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundStyle(selected ? .black : .white)
-                                    .frame(width: 36, height: 36)
-                                    .background(selected ? AppTheme.accent : Color.white.opacity(0.10), in: Circle())
+                                Label("Apagar alarme", systemImage: "trash")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(.red)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 13)
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("\(fullDayName(weekday)) \(selected ? "selecionado" : "não selecionado")")
+                            .buttonStyle(ClockGlassButtonStyle(tint: .red))
+                            .disabled(isSaving)
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 4)
-                    .listRowBackground(Color(red: 0.075, green: 0.075, blue: 0.075))
-                }
-
-                Section("Detalhes") {
-                    TextField("Nome do alarme (opcional)", text: $label)
-                        .textInputAutocapitalization(.sentences)
-                        .listRowBackground(Color(red: 0.075, green: 0.075, blue: 0.075))
-                    Toggle("Ativo", isOn: $isEnabled)
-                        .tint(.green)
-                        .listRowBackground(Color(red: 0.075, green: 0.075, blue: 0.075))
-                }
-
-                if isExisting {
-                    Section {
-                        Button("Apagar alarme", role: .destructive) {
-                            Task {
-                                await onDelete(initialAlarm.id)
-                                dismiss()
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .listRowBackground(Color(red: 0.075, green: 0.075, blue: 0.075))
-                    }
+                    .padding(18)
+                    .padding(.bottom, 12)
                 }
             }
-            .scrollContentBackground(.hidden)
-            .background(Color.black)
             .navigationTitle(isExisting ? "Editar alarme" : "Novo alarme")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancelar") { dismiss() }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(AppTheme.accent)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .liquidGlass(in: Capsule(), tint: AppTheme.accent, opacity: 0.08, interactive: true)
                         .disabled(isSaving)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(isSaving ? "Salvando…" : "Salvar") { save() }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(AppTheme.accent)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .liquidGlass(in: Capsule(), tint: AppTheme.accent, opacity: 0.08, interactive: true)
                         .disabled(isSaving)
-                        .fontWeight(.semibold)
                 }
             }
         }
@@ -313,6 +361,18 @@ private struct ClockAlarmEditor: View {
         }
     }
 
+    private func sectionCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 13) {
+            Text(title.uppercased())
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .tracking(1.3)
+                .foregroundStyle(AppTheme.accent)
+            content()
+        }
+        .padding(15)
+        .liquidGlassCard(cornerRadius: 18, tint: AppTheme.accent, opacity: 0.055)
+    }
+
     private func save() {
         let components = Calendar.current.dateComponents([.hour, .minute], from: time)
         var updated = initialAlarm
@@ -321,6 +381,7 @@ private struct ClockAlarmEditor: View {
         updated.label = label.trimmingCharacters(in: .whitespacesAndNewlines)
         updated.weekdays = weekdays.sorted()
         updated.isEnabled = isEnabled
+        updated.sound = sound
 
         isSaving = true
         Task {
@@ -339,5 +400,62 @@ private struct ClockAlarmEditor: View {
 
     private func fullDayName(_ weekday: Int) -> String {
         [1: "Domingo", 2: "Segunda-feira", 3: "Terça-feira", 4: "Quarta-feira", 5: "Quinta-feira", 6: "Sexta-feira", 7: "Sábado"][weekday] ?? "Dia"
+    }
+}
+
+private struct ClockSoundPicker: View {
+    @Binding var selection: ClockAlarmSound
+    let onPreview: (ClockAlarmSound) -> Void
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ForEach(ClockAlarmSound.allCases) { tone in
+                HStack(spacing: 8) {
+                    Button { selection = tone } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: tone.symbolName)
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(AppTheme.accent)
+                                .frame(width: 30, height: 30)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(tone.title)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                Text(tone.subtitle)
+                                    .font(.system(size: 11, weight: .regular))
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                            }
+                            Spacer(minLength: 2)
+                            Image(systemName: selection == tone ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(selection == tone ? AppTheme.accent : .secondary)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 9)
+                        .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                        .liquidGlass(
+                            in: RoundedRectangle(cornerRadius: 13, style: .continuous),
+                            tint: selection == tone ? AppTheme.accent : .white,
+                            opacity: selection == tone ? 0.13 : 0.035,
+                            interactive: true
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Selecionar som \(tone.title)")
+
+                    Button { onPreview(tone) } label: {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 39, height: 39)
+                            .liquidGlass(in: Circle(), tint: AppTheme.accent, opacity: 0.12, interactive: true)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Ouvir \(tone.title)")
+                }
+            }
+        }
     }
 }
