@@ -538,6 +538,11 @@ private final class CalculatorEntryTriggerMonitor: ObservableObject {
     private var onEnter: (() -> Void)?
     private var lastObservedVolume: Float = 0
     private var previousBatteryMonitoringEnabled = false
+    private var previousAudioCategory: AVAudioSession.Category?
+    private var previousAudioMode: AVAudioSession.Mode?
+    private var previousAudioOptions: AVAudioSession.CategoryOptions = []
+    private var audioSessionConfiguredByMonitor = false
+    private var audioSessionActivatedByMonitor = false
     private var isRunning = false
     private var didEnter = false
 
@@ -559,6 +564,17 @@ private final class CalculatorEntryTriggerMonitor: ObservableObject {
         }
 
         let audioSession = AVAudioSession.sharedInstance()
+        previousAudioCategory = audioSession.category
+        previousAudioMode = audioSession.mode
+        previousAudioOptions = audioSession.categoryOptions
+        do {
+            try audioSession.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+            audioSessionConfiguredByMonitor = true
+            try audioSession.setActive(true)
+            audioSessionActivatedByMonitor = true
+        } catch {
+            // Continue observing; the session may already be configured elsewhere.
+        }
         lastObservedVolume = audioSession.outputVolume
         volumeObservation = audioSession.observe(\.outputVolume, options: [.new]) { [weak self] _, change in
             guard let newVolume = change.newValue else { return }
@@ -582,6 +598,17 @@ private final class CalculatorEntryTriggerMonitor: ObservableObject {
         }
         volumeObservation?.invalidate()
         volumeObservation = nil
+        let audioSession = AVAudioSession.sharedInstance()
+        if audioSessionActivatedByMonitor {
+            try? audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+            audioSessionActivatedByMonitor = false
+        }
+        if audioSessionConfiguredByMonitor,
+           let previousAudioCategory,
+           let previousAudioMode {
+            try? audioSession.setCategory(previousAudioCategory, mode: previousAudioMode, options: previousAudioOptions)
+            audioSessionConfiguredByMonitor = false
+        }
         onEnter = nil
         if !previousBatteryMonitoringEnabled {
             UIDevice.current.isBatteryMonitoringEnabled = false
