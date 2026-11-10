@@ -14,6 +14,7 @@
 		C10C1002 /* ClockHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10C2002; };
 		C10C1003 /* ClockAlarmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10C2003; };
 		C10C1004 /* ClockTimerStopwatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10C2004; };
+		C10C1005 /* CalculadoraIPhoneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10C2005; };
 		3105A203 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A023; };
 		3105A204 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A024; };
 		3105A205 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A025; };
@@ -94,6 +95,7 @@
 		C10C2002 /* ClockHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockHomeView.swift; sourceTree = "<group>"; };
 		C10C2003 /* ClockAlarmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockAlarmView.swift; sourceTree = "<group>"; };
 		C10C2004 /* ClockTimerStopwatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockTimerStopwatchView.swift; sourceTree = "<group>"; };
+		C10C2005 /* CalculadoraIPhoneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculadoraIPhoneView.swift; sourceTree = "<group>"; };
 		C10C3001 /* Brisa.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Brisa.caf; sourceTree = "<group>"; };
 		C10C3002 /* Pulsar.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Pulsar.caf; sourceTree = "<group>"; };
 		C10C3003 /* Aurora.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Aurora.caf; sourceTree = "<group>"; };
@@ -258,6 +260,7 @@
 				C10C2002 /* ClockHomeView.swift */,
 				C10C2003 /* ClockAlarmView.swift */,
 				C10C2004 /* ClockTimerStopwatchView.swift */,
+				C10C2005 /* CalculadoraIPhoneView.swift */ ,
 				3105A098 /* DesignSystem.swift */,
 				3105A023 /* SettingsView.swift */,
 				3105A024 /* LogView.swift */,
@@ -421,7 +424,7 @@
 				files = (
 					3105A200, 3105A201, 3105A203, 3105A204,
 					3105M200,
-					C10C1001, C10C1002, C10C1003, C10C1004,
+					C10C1001, C10C1002, C10C1003, C10C1004, C10C1005,
 				3105A205, 3105A206, 3105A207, 3105A209,
 				3105A210, 3105A220, 3105A221, 3105A222, 3105A223,
 				3105A224, 3105A225,
