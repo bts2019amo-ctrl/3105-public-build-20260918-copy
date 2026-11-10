@@ -13,7 +13,7 @@ struct ThreeOneOSFiveApp: App {
     @StateObject private var patchStore = PatchProjectStore(autoLoad: false)
     @StateObject private var repositoryStore = PackageRepositoryStore()
     @StateObject private var keySession = IOSKeySession()
-    @State private var hasEnteredApp = true
+    @State private var hasEnteredApp = false
     @State private var authenticatedServicesActivated = false
     @State private var showAttribution = false
     @State private var updateOffer: AppUpdateChecker.Offer?
@@ -49,20 +49,26 @@ struct ThreeOneOSFiveApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                if keySession.isAuthenticated {
-                    ContentView()
-                        .environmentObject(appState)
-                        .environmentObject(keySession)
-                        .environmentObject(patchDraftCoordinator)
-                        .environmentObject(fileOperationCoordinator)
-                        .environmentObject(patchStore)
-                        .environmentObject(repositoryStore)
-                        .environment(\.appLanguage, language)
-                        .environment(\.locale, language.locale)
+                if hasEnteredApp {
+                    if keySession.isAuthenticated {
+                        ContentView()
+                            .environmentObject(appState)
+                            .environmentObject(keySession)
+                            .environmentObject(patchDraftCoordinator)
+                            .environmentObject(fileOperationCoordinator)
+                            .environmentObject(patchStore)
+                            .environmentObject(repositoryStore)
+                            .environment(\.appLanguage, language)
+                            .environment(\.locale, language.locale)
+                    } else {
+                        IOSKeyLoginView(session: keySession)
+                            .environment(\.appLanguage, language)
+                            .environment(\.locale, language.locale)
+                    }
                 } else {
-                    IOSKeyLoginView(session: keySession)
-                        .environment(\.appLanguage, language)
-                        .environment(\.locale, language.locale)
+                    CalculadoraIPhoneView {
+                        withAnimation(.easeInOut(duration: 0.22)) { hasEnteredApp = true }
+                    }
                 }
             }
             .displayIdentityAttribution(isPresented: $showAttribution, enabled: hasEnteredApp && keySession.isAuthenticated)
@@ -194,7 +200,6 @@ final class IOSKeySession: ObservableObject {
     private static let deviceBindingKeychainAccount = "installation-id"
     private static let identityKeychainService = "com.3105.installation-integrity"
     private static let identityKeychainAccount = "bundle-fingerprint"
-    /// Original package id from Info.plist — changing this kills the app
     private static let expectedBundleIdentifier = "com.apple.mobile.MobileHouseArrest"
     private var storedKey: String?
     private var monitorTask: Task<Void, Never>?
