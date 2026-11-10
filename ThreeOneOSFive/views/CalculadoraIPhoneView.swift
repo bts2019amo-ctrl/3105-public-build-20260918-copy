@@ -49,7 +49,7 @@ struct CalculadoraIPhoneView: View {
                             .padding(.bottom, 8)
                     }
 
-                    basicKeypad(keyHeight: mode == .basic ? 78 : 48)
+                    basicKeypad(keyHeight: mode == .basic ? 86 : 48)
                         .padding(.horizontal, 14)
                         .padding(.bottom, 8)
                 }
@@ -108,7 +108,7 @@ struct CalculadoraIPhoneView: View {
             })
             .accessibilityAction(named: Text("Entrar no aplicativo")) { onContinue() }
         }
-        .frame(height: 42)
+        .frame(height: 44)
     }
 
     private func glassIcon(_ symbol: String, accessibility: String, action: @escaping () -> Void) -> some View {
@@ -117,14 +117,14 @@ struct CalculadoraIPhoneView: View {
                 if symbol == "calculator" {
                     CalculatorSwitcherGlyph()
                         .stroke(Color.white.opacity(0.92), style: StrokeStyle(lineWidth: 1.25, lineCap: .round, lineJoin: .round))
-                        .frame(width: 15, height: 18)
+                        .frame(width: 16, height: 19)
                 } else {
                     Image(systemName: symbol)
-                        .font(.system(size: 17, weight: .medium))
+                        .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(.white.opacity(0.92))
                 }
             }
-                .frame(width: 42, height: 42)
+                .frame(width: 44, height: 44)
                 .background(.ultraThinMaterial, in: Circle())
                 .overlay(Circle().stroke(Color.white.opacity(0.12), lineWidth: 0.7))
                 .shadow(color: .black.opacity(0.22), radius: 8, y: 3)
@@ -135,7 +135,7 @@ struct CalculadoraIPhoneView: View {
 
     private var mainDisplay: some View {
         Text(display)
-            .font(.system(size: mode == .basic ? 64 : 48, weight: .light, design: .default))
+            .font(.system(size: mode == .basic ? 70 : 48, weight: .light, design: .default))
             .foregroundStyle(.white)
             .lineLimit(1)
             .minimumScaleFactor(0.35)
@@ -296,18 +296,18 @@ struct CalculadoraIPhoneView: View {
             [.text("1", .number, .digit("1")), .text("2", .number, .digit("2")), .text("3", .number, .digit("3")), .text("+", .operatorKey, .add)],
             [.text("+/−", .number, .toggleSign), .text("0", .number, .digit("0")), .text(",", .number, .decimal), .text("=", .operatorKey, .equals)]
         ]
-        return VStack(spacing: mode == .basic ? 9 : 6) {
+        return VStack(spacing: mode == .basic ? 8 : 6) {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                HStack(spacing: 9) {
+                HStack(spacing: 8) {
                     ForEach(Array(row.enumerated()), id: \.offset) { _, key in
                         Button { perform(key.action) } label: {
                             Group {
                                 if let symbol = key.symbol {
                                     Image(systemName: symbol)
-                                        .font(.system(size: key.label == nil ? 25 : 31, weight: .regular))
+                                        .font(.system(size: key.label == nil ? 27 : 33, weight: .regular))
                                 } else {
                                     Text(key.label ?? "")
-                                        .font(.system(size: key.label == "AC" ? 27 : 32, weight: .regular))
+                                        .font(.system(size: key.label == "AC" ? 30 : 35, weight: .regular))
                                         .minimumScaleFactor(0.65)
                                         .lineLimit(1)
                                 }
