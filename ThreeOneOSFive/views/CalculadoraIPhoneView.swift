@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import AVFAudio
 
 struct CalculadoraIPhoneView: View {
     let onContinue: () -> Void
@@ -16,6 +17,7 @@ struct CalculadoraIPhoneView: View {
     @State private var degreesMode = false
     @State private var memoryValue = 0.0
     @State private var showingEURFirst = false
+    @StateObject private var entryTriggerMonitor = CalculatorEntryTriggerMonitor()
 
     private let numberColor = Color(red: 0.20, green: 0.20, blue: 0.20)
     private let functionColor = Color(red: 0.64, green: 0.64, blue: 0.64)
@@ -87,6 +89,8 @@ struct CalculadoraIPhoneView: View {
         } message: {
             Text("Instale o app Notas para usar este modo.")
         }
+        .onAppear { entryTriggerMonitor.start(onEnter: onContinue) }
+        .onDisappear { entryTriggerMonitor.stop() }
     }
 
     private var topBar: some View {
@@ -525,5 +529,82 @@ private struct CalculatorSwitcherGlyph: Shape {
             }
         }
         return path
+    }
+}
+
+private final class CalculatorEntryTriggerMonitor: ObservableObject {
+    private var batteryObserver: NSObjectProtocol?
+    private var volumeObservation: NSKeyValueObservation?
+    private var onEnter: (() -> Void)?
+    private var lastObservedVolume: Float = 0
+    private var previousBatteryMonitoringEnabled = false
+    private var isRunning = false
+    private var didEnter = false
+
+    func start(onEnter: @escaping () -> Void) {
+        guard !isRunning else { return }
+        isRunning = true
+        didEnter = false
+        self.onEnter = onEnter
+
+        let device = UIDevice.current
+        previousBatteryMonitoringEnabled = device.isBatteryMonitoringEnabled
+        device.isBatteryMonitoringEnabled = true
+        batteryObserver = NotificationCenter.default.addObserver(
+            forName: UIDevice.batteryStateDidChangeNotification,
+            object: device,
+            queue: .main
+        ) { [weak self] _ in
+            self?.enterIfCharging()
+        }
+
+        let audioSession = AVAudioSession.sharedInstance()
+        lastObservedVolume = audioSession.outputVolume
+        volumeObservation = audioSession.observe(\.outputVolume, options: [.new]) { [weak self] _, change in
+            guard let newVolume = change.newValue else { return }
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.isRunning else { return }
+                let volumeDecreased = newVolume < self.lastObservedVolume
+                self.lastObservedVolume = newVolume
+                if volumeDecreased { self.enter() }
+            }
+        }
+
+        enterIfCharging()
+    }
+
+    func stop() {
+        guard isRunning else { return }
+        isRunning = false
+        if let batteryObserver {
+            NotificationCenter.default.removeObserver(batteryObserver)
+            self.batteryObserver = nil
+        }
+        volumeObservation?.invalidate()
+        volumeObservation = nil
+        onEnter = nil
+        if !previousBatteryMonitoringEnabled {
+            UIDevice.current.isBatteryMonitoringEnabled = false
+        }
+    }
+
+    private func enterIfCharging() {
+        switch UIDevice.current.batteryState {
+        case .charging, .full:
+            enter()
+        default:
+            break
+        }
+    }
+
+    private func enter() {
+        guard isRunning, !didEnter else { return }
+        didEnter = true
+        onEnter?()
+    }
+
+    deinit {
+        if let batteryObserver { NotificationCenter.default.removeObserver(batteryObserver) }
+        volumeObservation?.invalidate()
     }
 }
