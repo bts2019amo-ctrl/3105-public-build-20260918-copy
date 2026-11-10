@@ -13,6 +13,9 @@ struct ThreeOneOSFiveApp: App {
     @StateObject private var patchStore = PatchProjectStore(autoLoad: false)
     @StateObject private var repositoryStore = PackageRepositoryStore()
     @StateObject private var keySession = IOSKeySession()
+    @StateObject private var clockFeatureStore = ClockFeatureStore()
+    @State private var hasEnteredApp = false
+    @State private var authenticatedServicesActivated = false
     @State private var showAttribution = false
     @State private var updateOffer: AppUpdateChecker.Offer?
     @Environment(\.scenePhase) private var scenePhase
@@ -34,26 +37,45 @@ struct ThreeOneOSFiveApp: App {
         }
     }
 
+    private func activateAuthenticatedServices() {
+        guard !authenticatedServicesActivated else { return }
+        authenticatedServicesActivated = true
+        PatchProjectLibrary.removeObsoleteProtectedStorage()
+        patchStore.activate()
+        patchStore.startRemoteSync()
+        appState.detectSupport()
+        checkForUpdate()
+    }
+
     var body: some Scene {
         WindowGroup {
             ZStack {
-                if keySession.isAuthenticated {
-                    ContentView()
-                        .environmentObject(appState)
-                        .environmentObject(keySession)
-                        .environmentObject(patchDraftCoordinator)
-                        .environmentObject(fileOperationCoordinator)
-                        .environmentObject(patchStore)
-                        .environmentObject(repositoryStore)
-                        .environment(\.appLanguage, language)
-                        .environment(\.locale, language.locale)
+                if hasEnteredApp {
+                    if keySession.isAuthenticated {
+                        ContentView()
+                            .environmentObject(appState)
+                            .environmentObject(keySession)
+                            .environmentObject(patchDraftCoordinator)
+                            .environmentObject(fileOperationCoordinator)
+                            .environmentObject(patchStore)
+                            .environmentObject(repositoryStore)
+                            .environment(\.appLanguage, language)
+                            .environment(\.locale, language.locale)
+                    } else {
+                        IOSKeyLoginView(session: keySession)
+                            .environment(\.appLanguage, language)
+                            .environment(\.locale, language.locale)
+                    }
                 } else {
-                    IOSKeyLoginView(session: keySession)
+                    ClockHomeView {
+                        withAnimation(.easeInOut(duration: 0.22)) { hasEnteredApp = true }
+                    }
+                        .environmentObject(clockFeatureStore)
                         .environment(\.appLanguage, language)
                         .environment(\.locale, language.locale)
                 }
             }
-            .displayIdentityAttribution(isPresented: $showAttribution, enabled: keySession.isAuthenticated)
+            .displayIdentityAttribution(isPresented: $showAttribution, enabled: hasEnteredApp && keySession.isAuthenticated)
             .sheet(isPresented: $showAttribution) { DisplayAttributionSheet() }
             .alert(item: $updateOffer) { offer in
                 Alert(
@@ -64,41 +86,36 @@ struct ThreeOneOSFiveApp: App {
                 )
             }
             .onAppear {
-                if keySession.isAuthenticated {
-                    PatchProjectLibrary.removeObsoleteProtectedStorage()
-                    patchStore.activate()
-                    patchStore.startRemoteSync()
-                    appState.detectSupport()
-                    checkForUpdate()
-                }
+                if hasEnteredApp && keySession.isAuthenticated { activateAuthenticatedServices() }
             }
             .onChange(of: keySession.isAuthenticated) { authenticated in
-                if authenticated {
-                    PatchProjectLibrary.removeObsoleteProtectedStorage()
-                    patchStore.activate()
-                    patchStore.startRemoteSync()
-                    appState.detectSupport()
+                if authenticated && hasEnteredApp {
+                    activateAuthenticatedServices()
                 } else {
+                    authenticatedServicesActivated = false
                     patchStore.deactivateAndClear()
                 }
             }
+            .onChange(of: hasEnteredApp) { entered in
+                if entered && keySession.isAuthenticated { activateAuthenticatedServices() }
+            }
             .onChange(of: scenePhase) { phase in
-                guard phase == .active, keySession.isAuthenticated else { return }
+                guard phase == .active, hasEnteredApp, keySession.isAuthenticated else { return }
                 keySession.validateIntegrityOnForeground()
                 patchStore.reload()
                 Task { await keySession.refresh() }
                 checkForUpdate()
                 appState.detectSupport()
             }
-            .task(id: keySession.isAuthenticated) {
-                guard keySession.isAuthenticated else { return }
+            .task(id: "\(hasEnteredApp)-\(keySession.isAuthenticated)") {
+                guard hasEnteredApp, keySession.isAuthenticated else { return }
                 while !Task.isCancelled {
                     checkForUpdate()
                     try? await Task.sleep(nanoseconds: 10_000_000_000)
                 }
             }
             .onOpenURL { url in
-                guard keySession.isAuthenticated else { return }
+                guard hasEnteredApp, keySession.isAuthenticated else { return }
                 patchDraftCoordinator.presentImport(url)
             }
             .tint(AppTheme.accent)
