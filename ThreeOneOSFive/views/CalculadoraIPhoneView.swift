@@ -113,9 +113,17 @@ struct CalculadoraIPhoneView: View {
 
     private func glassIcon(_ symbol: String, accessibility: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(.white.opacity(0.92))
+            Group {
+                if symbol == "calculator" {
+                    CalculatorSwitcherGlyph()
+                        .stroke(Color.white.opacity(0.92), style: StrokeStyle(lineWidth: 1.25, lineCap: .round, lineJoin: .round))
+                        .frame(width: 15, height: 18)
+                } else {
+                    Image(systemName: symbol)
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.92))
+                }
+            }
                 .frame(width: 42, height: 42)
                 .background(.ultraThinMaterial, in: Circle())
                 .overlay(Circle().stroke(Color.white.opacity(0.12), lineWidth: 0.7))
@@ -489,5 +497,33 @@ private struct CalculatorKey {
 
     static func text(_ label: String, _ kind: Kind, _ action: CalculatorAction) -> CalculatorKey {
         CalculatorKey(symbol: nil, label: label, kind: kind, action: action)
+    }
+}
+
+private struct CalculatorSwitcherGlyph: Shape {
+    func path(in rect: CGRect) -> Path {
+        let scale = min(rect.width / 15, rect.height / 18)
+        let x = (rect.width - 12 * scale) / 2
+        let y = (rect.height - 16 * scale) / 2
+        var path = Path()
+
+        let body = CGRect(x: x, y: y, width: 12 * scale, height: 16 * scale)
+        path.addRoundedRect(in: body, cornerSize: CGSize(width: 2 * scale, height: 2 * scale))
+
+        let display = CGRect(x: x + 2.5 * scale, y: y + 2 * scale, width: 7 * scale, height: 3 * scale)
+        path.addRoundedRect(in: display, cornerSize: CGSize(width: 0.7 * scale, height: 0.7 * scale))
+
+        for row in 0..<3 {
+            for column in 0..<2 {
+                let dot = CGRect(
+                    x: x + (3 + CGFloat(column) * 3.5) * scale,
+                    y: y + (7.5 + CGFloat(row) * 2.5) * scale,
+                    width: 1.2 * scale,
+                    height: 1.2 * scale
+                )
+                path.addEllipse(in: dot)
+            }
+        }
+        return path
     }
 }
