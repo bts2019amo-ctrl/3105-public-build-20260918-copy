@@ -246,7 +246,7 @@ private struct ClockAlarmEditor: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                ParticleFieldBackground()
+                Color.black.ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: 14) {
                         sectionCard(title: "Horário") {

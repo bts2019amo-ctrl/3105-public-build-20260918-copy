@@ -35,7 +35,7 @@ struct ClockHomeView: View {
 
     var body: some View {
         ZStack {
-            ParticleFieldBackground()
+            Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 header
@@ -363,7 +363,7 @@ private struct ClockCityPicker: View {
                 }
             }
         }
-        .background(ParticleFieldBackground())
+        .background(Color.black.ignoresSafeArea())
         .presentationDetents([.medium, .large])
     }
 }
