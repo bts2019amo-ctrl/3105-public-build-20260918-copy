@@ -108,8 +108,9 @@ final class ClockFeatureStore: ObservableObject {
     }
 
     func saveAlarm(_ alarm: ClockAlarm) async -> ClockAlarmSaveResult {
-        if alarm.isEnabled && !(await requestNotificationAuthorization()) {
-            return .notificationsDenied
+        if alarm.isEnabled {
+            let notificationsAllowed = await requestNotificationAuthorization()
+            guard notificationsAllowed else { return .notificationsDenied }
         }
 
         let nextAlarms = replacing(alarm, in: alarms)
@@ -127,8 +128,9 @@ final class ClockFeatureStore: ObservableObject {
 
     func setAlarmEnabled(id: UUID, isEnabled: Bool) async -> ClockAlarmSaveResult {
         guard let existing = alarms.first(where: { $0.id == id }) else { return .saved }
-        if isEnabled && !(await requestNotificationAuthorization()) {
-            return .notificationsDenied
+        if isEnabled {
+            let notificationsAllowed = await requestNotificationAuthorization()
+            guard notificationsAllowed else { return .notificationsDenied }
         }
 
         var updated = existing
