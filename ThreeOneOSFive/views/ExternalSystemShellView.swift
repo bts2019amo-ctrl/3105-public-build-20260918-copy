@@ -239,7 +239,7 @@ private struct DeltaColorWheel: View {
 
 private enum DeltaRoute: Equatable { case selector, dashboard }
 private enum DeltaGame: String, CaseIterable { case freeFire, freeFireMax }
-private enum DeltaTab: Hashable { case dashboard, cache, avatar, hologram, external, skin, settings, custom(String)
+private enum DeltaTab: Hashable { case dashboard, cache, avatar, hologram, external, skin, settings, ghost, custom(String)
     var title: String {
         switch self {
         case .dashboard: return "Categorias"
@@ -249,6 +249,7 @@ private enum DeltaTab: Hashable { case dashboard, cache, avatar, hologram, exter
         case .external: return "EXTERNAL"
         case .skin: return "Skin"
         case .settings: return "Configurações"
+        case .ghost: return "Modo Fantasma"
         case .custom(let identifier): return identifier
         }
     }
@@ -261,6 +262,7 @@ private enum DeltaTab: Hashable { case dashboard, cache, avatar, hologram, exter
         case .external: return "External"
         case .skin: return "Skin"
         case .settings: return "CÃ i Äáº·t"
+        case .ghost: return "Cháº¿ Äá» áº©n"
         case .custom(let identifier): return identifier
         }
     }
@@ -273,6 +275,7 @@ private enum DeltaTab: Hashable { case dashboard, cache, avatar, hologram, exter
         case .external: return "scope"
         case .skin: return "tshirt.fill"
         case .settings: return "gearshape.fill"
+        case .ghost: return "eye.slash.fill"
         case .custom: return "square.grid.2x2.fill"
         }
     }
@@ -530,6 +533,7 @@ private struct DeltaDashboardView: View {
                             case .external: DeltaRemoteFeatureTab(feature: .external, selectedGame: selectedGame)
                             case .skin: DeltaRemoteFeatureTab(feature: .skin, selectedGame: selectedGame)
                             case .settings: DeltaReferenceSettingsTab(languageCode: $languageCode, isVietnamese: isVietnamese, appState: appState, keySession: keySession)
+                            case .ghost: DeltaGhostModeTab()
                             case .custom(let identifier): DeltaRemoteCustomFeatureTab(identifier: identifier, selectedGame: selectedGame)
                             }
                         }
@@ -651,6 +655,7 @@ private struct DeltaQuickMenu: View {
                 menuItem(.cache, subtitle: "Patches de cache")
                 menuItem(.skin, subtitle: "Patches de skin")
                 menuItem(.external, subtitle: "Patches EXTERNAL")
+                menuItem(.ghost, subtitle: "Ativar Modo Fantasma")
             }
         }
         .padding(22)
@@ -683,7 +688,46 @@ private struct DeltaQuickMenu: View {
         .buttonStyle(.plain)
     }
 }
-
+private struct DeltaGhostModeTab: View {
+    @State private var isRunning = false
+    @State private var isActive = false
+    var body: some View {
+        VStack(spacing: 12) {
+            DeltaCard {
+                DeltaSectionTitle("MODO FANTASMA", icon: "eye.slash.fill")
+                Text("Ative o Modo Fantasma neste dispositivo.")
+                    .font(.caption)
+                    .foregroundStyle(DeltaColors.muted)
+                Button {
+                    guard !isRunning else { return }
+                    isRunning = true
+                    isActive = false
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        ST_fullStealthPass()
+                        DispatchQueue.main.async {
+                            isRunning = false
+                            isActive = true
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        if isRunning { ProgressView().tint(.white) }
+                        else { Image(systemName: isActive ? "checkmark.shield.fill" : "eye.slash") }
+                        Text(isRunning ? "Aplicando..." : (isActive ? "Fantasma Ativo" : "Ativar Modo Fantasma"))
+                        Spacer()
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background((isActive ? Color.green : DeltaColors.accent).opacity(0.24), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(isRunning)
+            }
+        }
+    }
+}
 private struct DeltaTabBar: View {
     @EnvironmentObject private var patchStore: PatchProjectStore
     @EnvironmentObject private var remoteConfig: RemoteAppConfigStore
@@ -1500,8 +1544,6 @@ private struct DeltaReferenceSettingsTab: View {
     let keySession: IOSKeySession
     @AppStorage("externalSystem.streamProofEnabled") private var streamProof = false
     @State private var copied = false
-    @State private var stealthRunning = false
-    @State private var stealthDone = false
     private var deviceUID: String {
         UIDevice.current.identifierForVendor?.uuidString.uppercased() ?? "UNAVAILABLE"
     }
@@ -1511,41 +1553,6 @@ private struct DeltaReferenceSettingsTab: View {
             DeltaCard {
                 DeltaSectionTitle(isVietnamese ? "QUYá»N RIÃNG TÆ¯" : "PRIVACY", icon: "video.slash.fill")
                 DeltaToggleRow(isVietnamese ? "Chá»ng stream" : "Stream Proof", isOn: $streamProof)
-            }
-            DeltaCard {
-                DeltaSectionTitle("MODO FANTASMA", icon: "eye.slash.fill")
-                Text("Oculta o app e limpa os rastros locais do dispositivo.")
-                    .font(.caption)
-                    .foregroundStyle(DeltaColors.muted)
-                Button {
-                    guard !stealthRunning else { return }
-                    stealthRunning = true
-                    stealthDone = false
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        ST_fullStealthPass()
-                        DispatchQueue.main.async {
-                            stealthRunning = false
-                            stealthDone = true
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 8) {
-                        if stealthRunning {
-                            ProgressView().tint(.white)
-                        } else {
-                            Image(systemName: stealthDone ? "checkmark.shield.fill" : "eye.slash")
-                        }
-                        Text(stealthRunning ? "Aplicando..." : (stealthDone ? "Fantasma Ativo" : "Ativar Modo Fantasma"))
-                        Spacer()
-                    }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background((stealthDone ? Color.green : DeltaColors.accent).opacity(0.24), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .disabled(stealthRunning)
             }
             DeltaCard {
                 DeltaSectionTitle(isVietnamese ? "THÃNG TIN Báº¢N QUYá»N" : "LICENSE INFORMATION", icon: "key.fill")
