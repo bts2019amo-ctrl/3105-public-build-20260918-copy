@@ -6,6 +6,9 @@ struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var patchStore: PatchProjectStore
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
+    @State private var stealthRunning = false
+    @State private var stealthDone = false
+    @State private var stealthMessage = ""
 
     var body: some View {
         NavigationStack {
@@ -23,6 +26,8 @@ struct SettingsView: View {
                         sectionLabel(language.text("common.device"))
                         deviceCard
                         supportCard
+                        sectionLabel("STEALTH")
+                        stealthCard
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, 18)
@@ -142,10 +147,10 @@ struct SettingsView: View {
     private var withdrawnRemoteRecoveryCard: some View {
         if !patchStore.withdrawnRemoteItems.isEmpty || patchStore.withdrawnRestoreError != nil {
             VStack(alignment: .leading, spacing: 13) {
-                Label("Recuperação de patches", systemImage: "arrow.uturn.backward.circle.fill")
+                Label("Recupera\u{00e7}\u{00e3}o de patches", systemImage: "arrow.uturn.backward.circle.fill")
                     .font(.headline)
                     .foregroundStyle(AppTheme.accent)
-                Text("Estes patches foram retirados do catálogo e não aparecem mais na lista. Restaure os arquivos originais antes de remover uma cópia que ainda esteja aplicada; se já foi restaurada, a cópia local pode ser removida.")
+                Text("Estes patches foram retirados do cat\u{00e1}logo e n\u{00e3}o aparecem mais na lista. Restaure os arquivos originais antes de remover uma c\u{00f3}pia que ainda esteja aplicada; se j\u{00e1} foi restaurada, a c\u{00f3}pia local pode ser removida.")
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.68))
                     .fixedSize(horizontal: false, vertical: true)
@@ -161,7 +166,7 @@ struct SettingsView: View {
                         Button {
                             patchStore.restoreWithdrawnRemotePackage(item)
                         } label: {
-                            Label("Restaurar se aplicado e remover cópia local", systemImage: "arrow.uturn.backward")
+                            Label("Restaurar se aplicado e remover c\u{00f3}pia local", systemImage: "arrow.uturn.backward")
                                 .font(.subheadline.weight(.semibold))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(12)
@@ -258,6 +263,72 @@ struct SettingsView: View {
             versionLine("iOS 26", ExploitSupportPolicy.verifiedIOS26Range)
             ForEach(ExploitSupportPolicy.verifiedIOS27Builds, id: \.build) { version in
                 versionLine("iOS 27", versionLabel(version))
+            }
+        }
+        .padding(17)
+        .glassCard()
+    }
+
+    private var stealthCard: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            HStack(spacing: 11) {
+                settingsIcon("eye.slash.fill")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Modo Fantasma")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    Text("Esconde o app do SpringBoard, limpa rastros de Settings, logs, recent apps e ativa anti-an\u{00e1}lise.")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.58))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Button {
+                guard !stealthRunning else { return }
+                stealthRunning = true
+                stealthDone = false
+                stealthMessage = ""
+                DispatchQueue.global(qos: .userInitiated).async {
+                    ST_fullStealthPass()
+                    DispatchQueue.main.async {
+                        stealthRunning = false
+                        stealthDone = true
+                        stealthMessage = "Fantasma ativado. App oculto e rastros limpos."
+                    }
+                }
+            } label: {
+                HStack(spacing: 9) {
+                    if stealthRunning {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: stealthDone ? "checkmark.shield.fill" : "eye.slash")
+                    }
+                    Text(stealthRunning ? "Aplicando..." : (stealthDone ? "Fantasma Ativo" : "Ativar Modo Fantasma"))
+                    Spacer()
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(
+                    (stealthDone ? Color.green : AppTheme.accent).opacity(0.22),
+                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke((stealthDone ? Color.green : AppTheme.accent).opacity(0.35), lineWidth: 0.8)
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(stealthRunning)
+
+            if !stealthMessage.isEmpty {
+                Text(stealthMessage)
+                    .font(.caption)
+                    .foregroundStyle(Color.green.opacity(0.95))
             }
         }
         .padding(17)
