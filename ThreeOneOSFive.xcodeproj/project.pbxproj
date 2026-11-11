@@ -3,609 +3,120 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 110;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		'3105A200' = {isa = PBXBuildFile; fileRef = 3105A020; };
-		'3105A201' = {isa = PBXBuildFile; fileRef = 3105A021; };
-		'3105A203' = {isa = PBXBuildFile; fileRef = 3105A023; };
-		'3105A204' = {isa = PBXBuildFile; fileRef = 3105A024; };
-		'3105A205' = {isa = PBXBuildFile; fileRef = 3105A025; };
-		'3105A206' = {isa = PBXBuildFile; fileRef = 3105A026; };
-		'3105A207' = {isa = PBXBuildFile; fileRef = 3105A027; };
-		'3105A208' = {isa = PBXBuildFile; fileRef = 3105A202; };
-		'3105A209' = {isa = PBXBuildFile; fileRef = 3105A029; };
-		'3105A210' = {isa = PBXBuildFile; fileRef = 3105A030; };
-		'3105A211' = {isa = PBXBuildFile; fileRef = 3105A031; };
-		'3105A220' = {isa = PBXBuildFile; fileRef = 3105A080; };
-		'3105A221' = {isa = PBXBuildFile; fileRef = 3105A081; };
-		'3105A222' = {isa = PBXBuildFile; fileRef = 3105A082; };
-		'3105A223' = {isa = PBXBuildFile; fileRef = 3105A083; };
-		'3105A224' = {isa = PBXBuildFile; fileRef = 3105A084; };
-		'3105A225' = {isa = PBXBuildFile; fileRef = 3105A085; };
-		'3105A226' = {isa = PBXBuildFile; fileRef = 3105A098; };
-		'3105A227' = {isa = PBXBuildFile; fileRef = 3105A099; };
-		'3105A228' = {isa = PBXBuildFile; fileRef = 3105A120; };
-		'3105A233' = {isa = PBXBuildFile; fileRef = 3105A104; };
-		'3105A234' = {isa = PBXBuildFile; fileRef = 3105A105; };
-		'3105A235' = {isa = PBXBuildFile; fileRef = 3105A106; };
-		'3105A236' = {isa = PBXBuildFile; fileRef = 3105A108; };
-		'3105A237' = {isa = PBXBuildFile; fileRef = 3105A109; };
-		'3105A238' = {isa = PBXBuildFile; fileRef = 3105A110; };
-		'3105A239' = {isa = PBXBuildFile; fileRef = 3105A111; };
-		'3105A240' = {isa = PBXBuildFile; fileRef = 3105A112; };
-		'3105A241' = {isa = PBXBuildFile; fileRef = 3105A113; };
-		'3105B214' = {isa = PBXBuildFile; fileRef = 3105B114; };
-		'3105B215' = {isa = PBXBuildFile; fileRef = 3105B115; };
-		'3105B216' = {isa = PBXBuildFile; fileRef = 3105B116; };
-		'3105B217' = {isa = PBXBuildFile; fileRef = 3105B117; };
-		'3105B218' = {isa = PBXBuildFile; fileRef = 3105B118; };
-		'3105B219' = {isa = PBXBuildFile; fileRef = 3105B119; };
-		'3105B220' = {isa = PBXBuildFile; fileRef = 3105B120; };
-		'3105B221' = {isa = PBXBuildFile; fileRef = 3105B121; };
-		'3105B222' = {isa = PBXBuildFile; fileRef = 3105B122; };
-		'3105C200' = {isa = PBXBuildFile; fileRef = 3105C100; };
-		'3105C201' = {isa = PBXBuildFile; fileRef = 3105C101; };
-		'3105C202' = {isa = PBXBuildFile; fileRef = 3105C102; };
-		'3105E200' = {isa = PBXBuildFile; fileRef = 3105E100; };
-		'3105E201' = {isa = PBXBuildFile; fileRef = 3105E101; };
-		'3105E202' = {isa = PBXBuildFile; fileRef = 3105E102; };
-		'3105F200' = {isa = PBXBuildFile; fileRef = 3105F100; };
-		'3105F201' = {isa = PBXBuildFile; fileRef = 3105F102; };
-		'3105F202' = {isa = PBXBuildFile; fileRef = 3105F103; };
-		'3105F203' = {isa = PBXBuildFile; fileRef = 3105F104; };
-		'3105F204' = {isa = PBXBuildFile; fileRef = 3105F105; };
-		'3105F205' = {isa = PBXBuildFile; fileRef = 3105F106; };
-		'3105F206' = {isa = PBXBuildFile; fileRef = 3105F108; };
-		'3105G200' = {isa = PBXBuildFile; fileRef = 3105G100; };
-		'3105G201' = {isa = PBXBuildFile; fileRef = 3105G101; };
-		'3105G202' = {isa = PBXBuildFile; fileRef = 3105G102; };
-		'3105G203' = {isa = PBXBuildFile; fileRef = 3105G103; };
-		'3105H200' = {isa = PBXBuildFile; fileRef = 3105H100; };
-		'3105I200' = {isa = PBXBuildFile; fileRef = 3105I100; };
-		'3105I201' = {isa = PBXBuildFile; fileRef = 3105I101; };
-		'3105J200' = {isa = PBXBuildFile; fileRef = 3105J201; };
-		'3105J204' = {isa = PBXBuildFile; fileRef = 3105J203; };
-		'3105J206' = {isa = PBXBuildFile; fileRef = 3105J205; };
-		'3105K200' = {isa = PBXBuildFile; fileRef = 3105K100; };
-		'3105L200' = {isa = PBXBuildFile; fileRef = 3105L100; };
-		'3105L201' = {isa = PBXBuildFile; fileRef = 3105L101; };
-		'3105L202' = {isa = PBXBuildFile; fileRef = 3105L102; };
-		'3105L203' = {isa = PBXBuildFile; fileRef = 3105L103; };
-		'3105L204' = {isa = PBXBuildFile; fileRef = 3105L104; };
-		'3105L205' = {isa = PBXBuildFile; fileRef = 3105L105; };
-		'3105M200' = {isa = PBXBuildFile; fileRef = 3105M100; };
-		5B8B450D8C10DFF6E661AA65 /* Stealth.m in Sources */ = {isa = PBXBuildFile; fileRef = E95B47AB9B97C3A15F48A701 /* Stealth.m */; };
-		'C10C1001' = {isa = PBXBuildFile; fileRef = C10C2001; };
-		'C10C1002' = {isa = PBXBuildFile; fileRef = C10C2002; };
-		'C10C1003' = {isa = PBXBuildFile; fileRef = C10C2003; };
-		'C10C1004' = {isa = PBXBuildFile; fileRef = C10C2004; };
-		'C10C1005' = {isa = PBXBuildFile; fileRef = C10C2005; };
-		'C10C4001' = {isa = PBXBuildFile; fileRef = C10C3001; };
-		'C10C4002' = {isa = PBXBuildFile; fileRef = C10C3002; };
-		'C10C4003' = {isa = PBXBuildFile; fileRef = C10C3003; };
-		F1514093ADB9B929CB4978FE /* Stealth.h in Headers */ = {isa = PBXBuildFile; fileRef = 6B854B639A630E5C0AE8AD22 /* Stealth.h */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
-		'3105A010' = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = 3105.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		'3105A020' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
-		'3105A021' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		'3105A023' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		'3105A024' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
-		'3105A025' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
-		'3105A026' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SBX.swift; sourceTree = "<group>"; };
-		'3105A027' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MG.swift; sourceTree = "<group>"; };
-		'3105A029' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = bad_query.c; sourceTree = "<group>"; };
-		'3105A030' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = mcm_bridge.m; sourceTree = "<group>"; };
-		'3105A031' = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		'3105A040' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bad_query.h; sourceTree = "<group>"; };
-		'3105A041' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mcm_bridge.h; sourceTree = "<group>"; };
-		'3105A050' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ThreeOneOSFive-Bridging-Header.h"; sourceTree = "<group>"; };
-		'3105A060' = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		'3105A080' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = kexploit_opa334.m; sourceTree = "<group>"; };
-		'3105A081' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = offsets.m; sourceTree = "<group>"; };
-		'3105A082' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = krw.m; sourceTree = "<group>"; };
-		'3105A083' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = kutils.m; sourceTree = "<group>"; };
-		'3105A084' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = vnode.m; sourceTree = "<group>"; };
-		'3105A085' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = sandbox_escape.m; sourceTree = "<group>"; };
-		'3105A090' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kexploit_opa334.h; sourceTree = "<group>"; };
-		'3105A091' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = offsets.h; sourceTree = "<group>"; };
-		'3105A092' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = krw.h; sourceTree = "<group>"; };
-		'3105A093' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kutils.h; sourceTree = "<group>"; };
-		'3105A094' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vnode.h; sourceTree = "<group>"; };
-		'3105A095' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sandbox_escape.h; sourceTree = "<group>"; };
-		'3105A096' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = machine_info.h; sourceTree = "<group>"; };
-		'3105A097' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = xpaci.h; sourceTree = "<group>"; };
-		'3105A098' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
-		'3105A099' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
-		'3105A104' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerStore.swift; sourceTree = "<group>"; };
-		'3105A105' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDataBrowserView.swift; sourceTree = "<group>"; };
-		'3105A106' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppIconHelper.m; sourceTree = "<group>"; };
-		'3105A107' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppIconHelper.h; sourceTree = "<group>"; };
-		'3105A108' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerIdentityResolver.swift; sourceTree = "<group>"; };
-		'3105A109' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerBrowserLogic.swift; sourceTree = "<group>"; };
-		'3105A110' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileReplacementService.swift; sourceTree = "<group>"; };
-		'3105A111' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManagerService.swift; sourceTree = "<group>"; };
-		'3105A112' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBrowserView.swift; sourceTree = "<group>"; };
-		'3105A113' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportPolicy.swift; sourceTree = "<group>"; };
-		'3105A121' = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		'3105A122' = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
-		'3105A202' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KernelExploit.swift; sourceTree = "<group>"; };
-		'3105B114' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectModels.swift; sourceTree = "<group>"; };
-		'3105B115' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchPackageCodec.swift; sourceTree = "<group>"; };
-		'3105B116' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchKeyStore.swift; sourceTree = "<group>"; };
-		'3105B117' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchTransaction.swift; sourceTree = "<group>"; };
-		'3105B118' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePatchService.swift; sourceTree = "<group>"; };
-		'3105B119' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectLibrary.swift; sourceTree = "<group>"; };
-		'3105B120' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectStore.swift; sourceTree = "<group>"; };
-		'3105B121' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectsView.swift; sourceTree = "<group>"; };
-		'3105B122' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectEditorView.swift; sourceTree = "<group>"; };
-		'3105B123' = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		'3105C100' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchDraftService.swift; sourceTree = "<group>"; };
-		'3105C101' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchDraftCoordinator.swift; sourceTree = "<group>"; };
-		'3105C102' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPatchSelectionView.swift; sourceTree = "<group>"; };
-		'3105C124' = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		'3105E100' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimitedCleanerService.swift; sourceTree = "<group>"; };
-		'3105E101' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanerView.swift; sourceTree = "<group>"; };
-		'3105E102' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanerCatalog.swift; sourceTree = "<group>"; };
-		'3105F100' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = wallpaper_zip.c; sourceTree = "<group>"; };
-		'3105F101' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = wallpaper_zip.h; sourceTree = "<group>"; };
-		'3105F102' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperLabModels.swift; sourceTree = "<group>"; };
-		'3105F103' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureZIPArchive.swift; sourceTree = "<group>"; };
-		'3105F104' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperInstaller.swift; sourceTree = "<group>"; };
-		'3105F105' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperLabService.swift; sourceTree = "<group>"; };
-		'3105F106' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperLabView.swift; sourceTree = "<group>"; };
-		'3105F108' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		'3105G100' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPArchiveWriter.swift; sourceTree = "<group>"; };
-		'3105G101' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileOperationCoordinator.swift; sourceTree = "<group>"; };
-		'3105G102' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPArchiveExtractor.swift; sourceTree = "<group>"; };
-		'3105G103' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchWorkspaceService.swift; sourceTree = "<group>"; };
-		'3105H100' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTabNavigationState.swift; sourceTree = "<group>"; };
-		'3105I100' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesTabControls.swift; sourceTree = "<group>"; };
-		'3105I101' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesTabSwitcherView.swift; sourceTree = "<group>"; };
-		'3105J201' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AntiDetection.m; sourceTree = "<group>"; };
-		'3105J202' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DisplayIdentity.h; sourceTree = "<group>"; };
-		'3105J203' = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DisplayIdentity.m; sourceTree = "<group>"; };
-		'3105J205' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayIdentityAttribution.swift; sourceTree = "<group>"; };
-		'3105K100' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBrowserMetadata.swift; sourceTree = "<group>"; };
-		'3105L100' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageRepositoryModels.swift; sourceTree = "<group>"; };
-		'3105L101' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageRepositoryStore.swift; sourceTree = "<group>"; };
-		'3105L102' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryMarketplaceView.swift; sourceTree = "<group>"; };
-		'3105L103' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryHomeView.swift; sourceTree = "<group>"; };
-		'3105L104' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositorySourcesView.swift; sourceTree = "<group>"; };
-		'3105L105' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryPresentationSupport.swift; sourceTree = "<group>"; };
-		'3105M100' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalSystemShellView.swift; sourceTree = "<group>"; };
-		6B854B639A630E5C0AE8AD22 /* Stealth.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Stealth.h; path = Stealth.h; sourceTree = "<group>"; };
-		'C10C2001' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockFeatureStore.swift; sourceTree = "<group>"; };
-		'C10C2002' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockHomeView.swift; sourceTree = "<group>"; };
-		'C10C2003' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockAlarmView.swift; sourceTree = "<group>"; };
-		'C10C2004' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockTimerStopwatchView.swift; sourceTree = "<group>"; };
-		'C10C2005' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculadoraIPhoneView.swift; sourceTree = "<group>"; };
-		'C10C3001' = {isa = PBXFileReference; lastKnownFileType = file; path = Brisa.caf; sourceTree = "<group>"; };
-		'C10C3002' = {isa = PBXFileReference; lastKnownFileType = file; path = Pulsar.caf; sourceTree = "<group>"; };
-		'C10C3003' = {isa = PBXFileReference; lastKnownFileType = file; path = Aurora.caf; sourceTree = "<group>"; };
-		E95B47AB9B97C3A15F48A701 /* Stealth.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = Stealth.m; path = Stealth.m; sourceTree = "<group>"; };
+		3657C2D9303730E800908AE2 /* worse_query.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = worse_query.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		3657C2DB303730E800908AE2 /* worse_query */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = worse_query;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
-		'3105A300' = {
+		3657C2D6303730E800908AE2 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		'3105A400' = {
+		3657C2D0303730E800908AE2 = {
 			isa = PBXGroup;
 			children = (
-				3105A401,
-				3105A402,
+				3657C2DB303730E800908AE2 /* worse_query */,
+				3657C2DA303730E800908AE2 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		'3105A401' = {
+		3657C2DA303730E800908AE2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3105A050,
-				3105A060,
-				3105A020,
-				3105A021,
-				3105A403,
-				3105A404,
-				3105A405,
-				3105A406,
-				3105A120,
-				3105A031,
-				C10C3000,
-			);
-			path = ThreeOneOSFive;
-			sourceTree = "<group>";
-		};
-		'3105A402' = {
-			isa = PBXGroup;
-			children = (
-				3105A010,
+				3657C2D9303730E800908AE2 /* worse_query.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		'3105A403' = {
-			isa = PBXGroup;
-			children = (
-				3105A029,
-				3105A040,
-				3105A030,
-				3105A041,
-				3105F100,
-				3105F101,
-			);
-			path = exploit;
-			sourceTree = "<group>";
-		};
-		'3105A404' = {
-			isa = PBXGroup;
-			children = (
-				3105M100,
-				C10C2002,
-				C10C2003,
-				C10C2004,
-				C10C2005,
-				3105A098,
-				3105A023,
-				3105A024,
-				3105A105,
-				3105A112,
-				3105I100,
-				3105I101,
-				3105B121,
-				3105B122,
-				3105C102,
-				3105E101,
-				3105F106,
-				3105F108,
-				3105L102,
-				3105L103,
-				3105L104,
-			);
-			path = views;
-			sourceTree = "<group>";
-		};
-		'3105A405' = {
-			isa = PBXGroup;
-			children = (
-				C10C2001,
-				3105A099,
-				3105A104,
-				3105A108,
-				3105A109,
-				3105A110,
-				3105A111,
-				3105G100,
-				3105G102,
-				3105G101,
-				3105K100,
-				3105L100,
-				3105L101,
-				3105L105,
-				3105A113,
-				3105B114,
-				3105B115,
-				3105B116,
-				3105B117,
-				3105B118,
-				3105B119,
-				3105B120,
-				3105G103,
-				3105H100,
-				3105C100,
-				3105C101,
-				3105E100,
-				3105E102,
-				3105F102,
-				3105F103,
-				3105F104,
-				3105F105,
-				3105A106,
-				3105A107,
-				3105A202,
-				3105J201,
-				3105J202,
-				3105J203,
-				3105J205,
-				3105A025,
-				3105A026,
-				3105A027,
-				6B854B639A630E5C0AE8AD22 /* Stealth.h */,
-				E95B47AB9B97C3A15F48A701 /* Stealth.m */,
-			);
-			path = helpers;
-			sourceTree = "<group>";
-		};
-		'3105A406' = {
-			isa = PBXGroup;
-			children = (
-				3105A080,
-				3105A090,
-				3105A081,
-				3105A091,
-				3105A082,
-				3105A092,
-				3105A083,
-				3105A093,
-				3105A084,
-				3105A094,
-				3105A085,
-				3105A095,
-				3105A096,
-				3105A097,
-			);
-			path = kexploit;
-			sourceTree = "<group>";
-		};
-		'C10C3000' = {
-			isa = PBXGroup;
-			children = (
-				C10C3001,
-				C10C3002,
-				C10C3003,
-			);
-			path = ClockSounds;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
-/* Begin PBXHeadersBuildPhase section */
-		81B549D89B2B923AA12A4C02 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F1514093ADB9B929CB4978FE /* Stealth.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXHeadersBuildPhase section */
-
 /* Begin PBXNativeTarget section */
-		'3105A500' = {
+		3657C2D8303730E800908AE2 /* worse_query */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3105A600;
+			buildConfigurationList = 3657C2E4303730E900908AE2 /* Build configuration list for PBXNativeTarget "worse_query" */;
 			buildPhases = (
-				3105A700,
-				3105A300,
-				3105A800,
-				81B549D89B2B923AA12A4C02 /* Headers */,
+				3657C2D5303730E800908AE2 /* Sources */,
+				3657C2D6303730E800908AE2 /* Frameworks */,
+				3657C2D7303730E800908AE2 /* Resources */,
 			);
 			buildRules = (
 			);
-			dependencies = (
+			fileSystemSynchronizedGroups = (
+				3657C2DB303730E800908AE2 /* worse_query */,
 			);
-			name = 3105;
-			productName = 3105;
-			productReference = 3105A010;
+			name = worse_query;
+			productName = worse_query;
+			productReference = 3657C2D9303730E800908AE2 /* worse_query.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		'3105A900' = {
+		3657C2D1303730E800908AE2 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1600;
-				LastUpgradeCheck = 1600;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					3657C2D8303730E800908AE2 = {
+						CreatedOnToolsVersion = 27.0;
+						LastSwiftMigration = 2700;
+					};
+				};
 			};
-			buildConfigurationList = 3105AA00;
-			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = "pt-BR";
+			buildConfigurationList = 3657C2D4303730E800908AE2 /* Build configuration list for PBXProject "worse_query" */;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
-				vi,
-				"zh-Hans",
-				"pt-BR",
 				Base,
 			);
-			mainGroup = 3105A400;
-			productRefGroup = 3105A402;
+			mainGroup = 3657C2D0303730E800908AE2;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3657C2DA303730E800908AE2 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				3105A500,
+				3657C2D8303730E800908AE2 /* worse_query */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		'3105A800' = {
+		3657C2D7303730E800908AE2 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
-				3105A211,
-				3105A228,
-				C10C4001,
-				C10C4002,
-				C10C4003,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		'3105A700' = {
+		3657C2D5303730E800908AE2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
-				3105A200,
-				3105A201,
-				3105A203,
-				3105A204,
-				3105M200,
-				C10C1001,
-				C10C1002,
-				C10C1003,
-				C10C1004,
-				C10C1005,
-				3105A205,
-				3105A206,
-				3105A207,
-				3105A209,
-				3105A210,
-				3105A220,
-				3105A221,
-				3105A222,
-				3105A223,
-				3105A224,
-				3105A225,
-				3105A226,
-				3105A227,
-				3105A233,
-				3105A234,
-				3105A235,
-				3105A236,
-				3105A237,
-				3105A238,
-				3105A239,
-				3105A208,
-				3105J200,
-				3105J204,
-				3105J206,
-				3105A240,
-				3105A241,
-				3105B214,
-				3105B215,
-				3105B216,
-				3105B217,
-				3105B218,
-				3105B219,
-				3105B220,
-				3105B221,
-				3105B222,
-				3105C200,
-				3105C201,
-				3105C202,
-				3105E200,
-				3105E201,
-				3105E202,
-				3105F200,
-				3105F201,
-				3105F202,
-				3105F203,
-				3105F204,
-				3105F205,
-				3105F206,
-				3105G200,
-				3105G201,
-				3105G202,
-				3105G203,
-				3105H200,
-				3105I200,
-				3105I201,
-				3105K200,
-				3105L200,
-				3105L201,
-				3105L202,
-				3105L203,
-				3105L204,
-				3105L205,
-				5B8B450D8C10DFF6E661AA65 /* Stealth.m in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXVariantGroup section */
-		'3105A120' = {
-			isa = PBXVariantGroup;
-			children = (
-				3105A121,
-				3105A122,
-				3105B123,
-				3105C124,
-			);
-			name = Localizable.strings;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
-
 /* Begin XCBuildConfiguration section */
-		'3105A601' = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_ENTITLEMENTS = "";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_EXPAND_BUILD_SETTINGS = YES;
-				INFOPLIST_FILE = ThreeOneOSFive/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = X;
-				INFOPLIST_KEY_CFBundleName = X;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 2.0;
-				OTHER_LDFLAGS = "-lz";
-				PRODUCT_BUNDLE_IDENTIFIER = com.apple.mobile.MobileHouseArrest;
-				PRODUCT_NAME = X;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "ThreeOneOSFive/ThreeOneOSFive-Bridging-Header.h";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		'3105A602' = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_ENTITLEMENTS = "";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_EXPAND_BUILD_SETTINGS = YES;
-				INFOPLIST_FILE = ThreeOneOSFive/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = X;
-				INFOPLIST_KEY_CFBundleName = X;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 2.0;
-				OTHER_LDFLAGS = "-lz";
-				PRODUCT_BUNDLE_IDENTIFIER = com.apple.mobile.MobileHouseArrest;
-				PRODUCT_NAME = X;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "ThreeOneOSFive/ThreeOneOSFive-Bridging-Header.h";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		'3105AA01' = {
+		3657C2E2303730E900908AE2 /* Debug configuration for PBXProject "worse_query" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -640,16 +151,17 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = K976G5HK7K;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
-					"",
+					"$(inherited)",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -657,7 +169,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -667,7 +180,7 @@
 			};
 			name = Debug;
 		};
-		'3105AA02' = {
+		3657C2E3303730E900908AE2 /* Release configuration for PBXProject "worse_query" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -702,9 +215,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = K976G5HK7K;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -713,7 +227,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
@@ -722,28 +237,114 @@
 			};
 			name = Release;
 		};
+		3657C2E5303730E900908AE2 /* Debug configuration for PBXNativeTarget "worse_query" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = worse_query/worse_query.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K976G5HK7K;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = worse_query;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "cc.forcequit.worse-query";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "worse_query/worse_query-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TVOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		3657C2E6303730E900908AE2 /* Release configuration for PBXNativeTarget "worse_query" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = worse_query/worse_query.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K976G5HK7K;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = worse_query;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "cc.forcequit.worse-query";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "worse_query/worse_query-Bridging-Header.h";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TVOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		'3105A600' = {
+		3657C2D4303730E800908AE2 /* Build configuration list for PBXProject "worse_query" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				3105A601,
-				3105A602,
+				3657C2E2303730E900908AE2 /* Debug configuration for PBXProject "worse_query" */,
+				3657C2E3303730E900908AE2 /* Release configuration for PBXProject "worse_query" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		'3105AA00' = {
+		3657C2E4303730E900908AE2 /* Build configuration list for PBXNativeTarget "worse_query" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				3105AA01,
-				3105AA02,
+				3657C2E5303730E900908AE2 /* Debug configuration for PBXNativeTarget "worse_query" */,
+				3657C2E6303730E900908AE2 /* Release configuration for PBXNativeTarget "worse_query" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 3105A900;
+	rootObject = 3657C2D1303730E800908AE2 /* Project object */;
+	validationLevel = 1;
 }
