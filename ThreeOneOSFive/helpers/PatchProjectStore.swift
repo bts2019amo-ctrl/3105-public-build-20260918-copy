@@ -6,7 +6,7 @@ enum RemotePatchConfiguration {
     // Kept for the separate app-config and app-update services.
     static let baseURL = URL(string: "https://patch3105-ebnmw8rq.manus.space")!
     static let mobileCatalogURL = URL(string: "https://painel.proxysystem.org/api/mobile/catalog")!
-    static let allowedRemoteFeatures: Set<String> = ["cache", "avatar", "hologram", "skin"]
+    static let allowedRemoteFeatures: Set<String> = ["cache", "avatar", "hologram", "external", "skin"]
     static let pollIntervalNanoseconds: UInt64 = 2_000_000_000
 
     static func stableRemoteID(_ value: String) -> Int {
@@ -295,8 +295,7 @@ final class PatchProjectStore: ObservableObject {
                     }
                     let featureIdentifier = patch.feature.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
                     guard RemotePatchConfiguration.allowedRemoteFeatures.contains(featureIdentifier),
-                          let feature = PatchFeatureCategory(rawValue: featureIdentifier),
-                          feature != .external else {
+                          let feature = PatchFeatureCategory(rawValue: featureIdentifier) else {
                         skippedCount += 1
                         continue
                     }
