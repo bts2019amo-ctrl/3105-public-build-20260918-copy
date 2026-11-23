@@ -3,48 +3,125 @@ import Foundation
 import UIKit
 
 enum RemotePatchConfiguration {
+    // Kept for the separate app-config and app-update services.
     static let baseURL = URL(string: "https://patch3105-ebnmw8rq.manus.space")!
-    static var syncToken: String {
-        (Bundle.main.object(forInfoDictionaryKey: "PatchSyncToken") as? String ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
+    static let mobileCatalogURL = URL(string: "https://painel.proxysystem.org/api/mobile/catalog")!
     static let allowedRemoteFeatures: Set<String> = ["cache", "avatar", "hologram", "skin"]
     static let pollIntervalNanoseconds: UInt64 = 2_000_000_000
+
+    static func stableRemoteID(_ value: String) -> Int {
+        let digest = SHA256.hash(data: Data(value.utf8))
+        let magnitude = digest.prefix(7).reduce(UInt64(0)) { ($0 << 8) | UInt64($1) }
+        return -Int(magnitude) - 1
+    }
 }
 
-private struct RemoteFeedEnvelope: Decodable {
-    let result: RemoteFeedResult
+private struct MobileCatalogResponse: Decodable {
+    let catalogVersion: Int64
+    let patches: [MobileCatalogPatch]
 }
 
-private struct RemoteFeedResult: Decodable {
-    let data: RemoteFeedData
+private struct MobileCatalogPatch: Decodable {
+    let id: String
+    let name: String
+    let description: String?
+    let maintenance: Bool?
+    let packageURL: String
+    let packageFilename: String
+    let packageSize: Int
+    let iconURL: String?
+    let catalogVersion: Int64?
+    let updatedAt: String
+    let checksumSha256: String?
+    let category: String?
+    let feature: String?
+    let password: String?
+
+    func asRemotePatch(defaultVersion: Int64) throws -> RemoteFeedPatch {
+        guard let catalogID = UUID(uuidString: id), !name.isEmpty, !packageURL.isEmpty,
+              !packageFilename.isEmpty, packageSize > 0,
+              let timestamp = Self.milliseconds(from: updatedAt) else {
+            throw NSError(
+                domain: "RemotePatchFeed",
+                code: 422,
+                userInfo: [NSLocalizedDescriptionKey: "O catálogo contém um patch com campos obrigatórios inválidos."]
+            )
+        }
+        let normalizedFeature = feature?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let resolvedFeature = normalizedFeature.flatMap { $0.isEmpty ? nil : $0 }
+            ?? Self.inferredFeature(name: name, fileName: packageFilename)
+        return RemoteFeedPatch(
+            id: RemotePatchConfiguration.stableRemoteID(catalogID.uuidString),
+            name: name,
+            category: category ?? "",
+            feature: resolvedFeature,
+            fileName: packageFilename,
+            fileUrl: packageURL,
+            fileSize: packageSize,
+            version: Int(catalogVersion ?? defaultVersion),
+            changelog: description,
+            checksumSha256: checksumSha256,
+            iconUrl: iconURL,
+            password: password,
+            updatedAt: timestamp,
+            isUnderMaintenance: maintenance ?? false
+        )
+    }
+
+    private static func milliseconds(from value: String) -> Int64? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        var date = formatter.date(from: value)
+        if date == nil {
+            formatter.formatOptions = [.withInternetDateTime]
+            date = formatter.date(from: value)
+        }
+        guard let date else { return nil }
+        return Int64((date.timeIntervalSince1970 * 1_000).rounded())
+    }
+
+    private static func inferredFeature(name: String, fileName: String) -> String {
+        let value = "\(name) \(fileName)"
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+        if value.contains("skin") { return "skin" }
+        if value.contains("avatar") { return "avatar" }
+        if value.contains("holo") { return "hologram" }
+        return "cache"
+    }
 }
 
-private struct RemoteFeedData: Decodable {
-    let json: RemoteFeed
-}
-
-private struct RemoteFeed: Decodable {
+private struct RemoteFeed {
     let version: Int64
     let patches: [RemoteFeedPatch]
+
+    init(catalog: MobileCatalogResponse) throws {
+        version = catalog.catalogVersion
+        patches = try catalog.patches.map { try $0.asRemotePatch(defaultVersion: catalog.catalogVersion) }
+        guard Set(patches.map(\.id)).count == patches.count else {
+            throw NSError(
+                domain: "RemotePatchFeed",
+                code: 422,
+                userInfo: [NSLocalizedDescriptionKey: "O catálogo contém IDs de patch duplicados."]
+            )
+        }
+    }
 }
 
-private struct RemoteFeedPatch: Decodable {
+private struct RemoteFeedPatch {
     let id: Int
     let name: String
     let category: String
     let feature: String
     let fileName: String
-    let fileKey: String
     let fileUrl: String
-    let mimeType: String
     let fileSize: Int
     let version: Int
     let changelog: String?
-    let checksumSha256: String
+    let checksumSha256: String?
     let iconUrl: String?
     let password: String?
     let updatedAt: Int64
+    let isUnderMaintenance: Bool
 }
 
 enum RemoteSyncState: Equatable {
@@ -172,19 +249,7 @@ final class PatchProjectStore: ObservableObject {
         defer { remoteSyncInFlight = false }
         remoteSyncState = .syncing
         do {
-            guard !RemotePatchConfiguration.syncToken.isEmpty else {
-                throw NSError(domain: "RemotePatchFeed", code: 401, userInfo: [NSLocalizedDescriptionKey: "Token de sincronização não foi incluído nesta compilação."])
-            }
-            guard let feedURL = URL(string: "api/trpc/patches.feed", relativeTo: RemotePatchConfiguration.baseURL)?.absoluteURL else {
-                throw URLError(.badURL)
-            }
-            let payload: [String: Any] = [
-                "json": [
-                    "syncToken": RemotePatchConfiguration.syncToken,
-                    "installationFingerprint": IOSKeySession.installationFingerprint
-                ]
-            ]
-            let payloadData = try JSONSerialization.data(withJSONObject: payload)
+            let feedURL = RemotePatchConfiguration.mobileCatalogURL
             let networkConfiguration = URLSessionConfiguration.default
             networkConfiguration.waitsForConnectivity = true
             networkConfiguration.timeoutIntervalForRequest = 45
@@ -192,12 +257,10 @@ final class PatchProjectStore: ObservableObject {
             networkConfiguration.requestCachePolicy = .reloadIgnoringLocalCacheData
             let networkSession = URLSession(configuration: networkConfiguration)
             var feedRequest = URLRequest(url: feedURL)
-            feedRequest.httpMethod = "POST"
-            feedRequest.httpBody = payloadData
+            feedRequest.httpMethod = "GET"
             feedRequest.timeoutInterval = 30
             feedRequest.cachePolicy = .reloadIgnoringLocalCacheData
             feedRequest.setValue("application/json", forHTTPHeaderField: "Accept")
-            feedRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
             feedRequest.setValue("3105-iOS", forHTTPHeaderField: "User-Agent")
             let (data, response) = try await Self.fetchWithRetry(
                 feedRequest,
@@ -206,13 +269,15 @@ final class PatchProjectStore: ObservableObject {
             guard let response = response as? HTTPURLResponse else {
                 throw URLError(.badServerResponse)
             }
+            guard response.url?.host?.lowercased() == feedURL.host?.lowercased() else {
+                throw URLError(.badServerResponse)
+            }
             guard (200..<300).contains(response.statusCode) else {
                 let body = String(data: data.prefix(512), encoding: .utf8) ?? "empty response"
                 throw NSError(domain: "RemotePatchFeed", code: response.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP \(response.statusCode): \(body)"])
             }
-            let envelope = try JSONDecoder().decode(RemoteFeedEnvelope.self, from: data)
-            let feed = envelope.result.data.json
-            await sendRemoteHeartbeat()
+            let catalog = try JSONDecoder().decode(MobileCatalogResponse.self, from: data)
+            let feed = try RemoteFeed(catalog: catalog)
 
             let allLocalItems = await Task.detached(priority: .utility) {
                 PatchProjectLibrary.load(includeWithdrawn: true)
@@ -224,6 +289,10 @@ final class PatchProjectStore: ObservableObject {
             for patch in feed.patches {
                 await Task.yield()
                 do {
+                    if patch.isUnderMaintenance {
+                        skippedCount += 1
+                        continue
+                    }
                     let featureIdentifier = patch.feature.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
                     guard RemotePatchConfiguration.allowedRemoteFeatures.contains(featureIdentifier),
                           let feature = PatchFeatureCategory(rawValue: featureIdentifier),
@@ -258,9 +327,16 @@ final class PatchProjectStore: ObservableObject {
                     let checksum = await Task.detached(priority: .utility) {
                         Self.sha256Hex(downloadedData)
                     }.value
+                    let sizeMatches = packageData.count == patch.fileSize
+                    let checksumMatches = patch.checksumSha256.map {
+                        checksum == $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                    } ?? true
                     guard let packageResponse = packageResponse as? HTTPURLResponse,
                           (200..<300).contains(packageResponse.statusCode),
-                          checksum == patch.checksumSha256.lowercased() else { continue }
+                          packageResponse.url?.host?.lowercased()
+                            == RemotePatchConfiguration.mobileCatalogURL.host?.lowercased(),
+                          sizeMatches,
+                          checksumMatches else { continue }
                     let inspectedData = packageData
                     var summary = try await Task.detached(priority: .utility) {
                         try PatchPackageCodec.inspect(inspectedData)
@@ -344,11 +420,14 @@ final class PatchProjectStore: ObservableObject {
                     PatchProjectLibrary.setRemoteVersion(patch.updatedAt, for: patch.id)
                     PatchProjectLibrary.setDisplayName(patch.name, for: summary.packageID)
                     PatchProjectLibrary.setFeatureIdentifier(featureIdentifier, for: summary.packageID)
-                    PatchProjectLibrary.setRemoteIconURL(patch.iconUrl, for: summary.packageID)
+                    PatchProjectLibrary.setRemoteIconURL(
+                        patch.iconUrl.flatMap { Self.remoteURL(for: $0)?.absoluteString },
+                        for: summary.packageID
+                    )
                     PatchProjectLibrary.setRemoteMetadata(
                         version: patch.version,
                         changelog: patch.changelog,
-                        checksum: patch.checksumSha256,
+                        checksum: checksum,
                         for: summary.packageID
                     )
                     reservedPackageIDs.insert(summary.packageID)
@@ -363,10 +442,7 @@ final class PatchProjectStore: ObservableObject {
             // The feed was decoded and passed the HTTP/checksum flow, so it is a
             // complete catalog snapshot. Unpublished packages with active receipts
             // are tombstoned and kept for recovery; inactive ones are removed.
-            let acceptedRemoteIDs = Set(feed.patches.compactMap { patch in
-                let feature = patch.feature.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-                return RemotePatchConfiguration.allowedRemoteFeatures.contains(feature) ? patch.id : nil
-            })
+            let acceptedRemoteIDs = Set(feed.patches.map(\.id))
             PatchProjectLibrary.removeRemotePackagesNotInFeed(remoteIDs: acceptedRemoteIDs)
             items = await Task.detached(priority: .utility) {
                 PatchProjectLibrary.load()
@@ -387,9 +463,9 @@ final class PatchProjectStore: ObservableObject {
     }
 
     private static func remoteURL(for value: String) -> URL? {
-        guard let candidate = URL(string: value, relativeTo: RemotePatchConfiguration.baseURL)?.absoluteURL,
+        guard let candidate = URL(string: value, relativeTo: RemotePatchConfiguration.mobileCatalogURL)?.absoluteURL,
               candidate.scheme?.lowercased() == "https",
-              candidate.host != nil else { return nil }
+              candidate.host?.lowercased() == RemotePatchConfiguration.mobileCatalogURL.host?.lowercased() else { return nil }
         return candidate
     }
 
@@ -409,24 +485,6 @@ final class PatchProjectStore: ObservableObject {
             }
         }
         throw lastError ?? URLError(.unknown)
-    }
-
-    private func sendRemoteHeartbeat() async {
-        guard IOSKeySession.runtimeAuthorized, !RemotePatchConfiguration.syncToken.isEmpty else { return }
-        guard let url = URL(string: "api/trpc/patches.heartbeat", relativeTo: RemotePatchConfiguration.baseURL)?.absoluteURL else { return }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let payload: [String: Any] = ["json": [
-            "syncToken": RemotePatchConfiguration.syncToken,
-            "installationFingerprint": IOSKeySession.installationFingerprint,
-            "model": UIDevice.current.model,
-            "osVersion": UIDevice.current.systemVersion,
-            "appVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown",
-        ]]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
-        let ephemeralSession = URLSession(configuration: .ephemeral)
-        _ = try? await ephemeralSession.data(for: request)
     }
 
     private nonisolated static func sha256Hex(_ data: Data) -> String {

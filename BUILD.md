@@ -1,15 +1,17 @@
-# Build do 3105
+# Build e catálogo de patches do 3105
 
-Este repositório é uma cópia de trabalho independente do projeto original [YangJiiii/3105](https://github.com/YangJiiii/3105). A configuração de sincronização remota do app foi atualizada para o feed 3105 Remote Patches.
+## Sincronização com o painel
 
-## Compilação e sincronização remota
+A IPA busca o catálogo por `GET https://painel.proxysystem.org/api/mobile/catalog`. O cliente resolve `packageURL` e `iconURL` relativos no mesmo domínio, confere o tamanho anunciado em `packageSize` e valida o pacote pelo decoder local. Se a resposta incluir `checksumSha256`, o hash também é conferido. O endpoint não exige `PATCH_SYNC_TOKEN`, e o cliente não envia mais heartbeat pelo protocolo tRPC antigo.
 
-O projeto exige macOS, Xcode e o SDK iOS. O workflow [Build iOS app](.github/workflows/build-ios.yml) compila o target `3105` em `Release` e publica o artefato `x-ios-ipa`, contendo somente `X.ipa`, no run do GitHub Actions por 14 dias. O log bruto do Xcode não é anexado ao artefato.
+O pacote amostrado do painel usa schema 9. A compatibilidade desse exemplar foi verificada: o conteúdo passou pela autenticação AES-GCM e o digest SHA-256 da regra conferiu. O app passa a aceitar schemas 1–3 e 9; continua criando pacotes novos no schema 3. Isso valida o exemplar consultado, não versões futuras ou pacotes com outros formatos.
 
-Antes do build, configure em **Settings → Secrets and variables → Actions** o segredo de repositório chamado exatamente `PATCH_SYNC_TOKEN`, com o novo token de sincronização do backend. Atalho para a tela: [Actions secrets do repositório](https://github.com/bts2019amo-ctrl/3105-public-build-20260918-copy/settings/secrets/actions). Não use a senha do Gmail/Manus. O workflow escreve o valor somente em um `.xcconfig` temporário no runner e o expande no `Info.plist` da compilação; o token não fica no código-fonte. O workflow falha com uma mensagem clara se o segredo estiver ausente ou for curto demais.
+A base legada em `RemotePatchConfiguration.baseURL` foi mantida separada para os serviços `api/app-config.json` e `api/app-update.json`. No domínio novo, esses caminhos respondem com a página HTML do SPA, não com os dados JSON esperados pelo app. A sincronização de patches usa exclusivamente `mobileCatalogURL`.
 
-O token é incorporado ao binário iOS porque o cliente precisa autenticar as chamadas ao feed. Como qualquer credencial estática em um app, ele pode ser extraído por engenharia reversa: trate-o como uma credencial de cliente limitada ao feed/heartbeat, não como segredo confidencial perante quem recebe a IPA. A administração continua protegida por OAuth. Rotacionar esse token exige atualizar o secret do GitHub Actions e gerar/distribuir uma nova IPA.
+Como o catálogo amostrado é acessível sem autenticação, os pacotes publicados nele podem ser baixados por qualquer cliente que conheça a rota. Não publique ali conteúdo que precise permanecer privado.
 
-## Instalação
+## Estado da compilação
 
-O workflow desativa a assinatura (`CODE_SIGNING_ALLOWED=NO`). Embora o artefato tenha extensão `.ipa`, ele é um pacote não assinado e não pode ser instalado em um iPhone sem assinatura/provisionamento compatível. Certificados, perfis de provisionamento e distribuição não estão configurados neste repositório.
+O projeto precisa de macOS e Xcode. A configuração de `ThreeOneOSFive.xcodeproj` foi restaurada a partir do commit `d5bd3ca`, cujo run do GitHub Actions foi bem-sucedido. Ela declara o target/scheme `3105` e produz `X.app`, que correspondem ao comando e caminho de artifact do workflow. O conjunto de arquivos-fonte em `ThreeOneOSFive/` não mudou desde aquele commit; a compilação da versão com a integração do catálogo será confirmada pelo runner macOS nesta branch.
+
+O workflow desativa a assinatura e empacota a pasta `X.app` em `X.ipa`. A IPA resultante é desassinada e não pode ser instalada diretamente em um iPhone sem assinatura e perfil de provisionamento compatíveis; esses elementos não estão configurados neste repositório.

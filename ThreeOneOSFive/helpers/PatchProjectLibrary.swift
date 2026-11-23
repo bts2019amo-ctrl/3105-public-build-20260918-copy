@@ -383,7 +383,11 @@ enum PatchProjectLibrary {
     ) {
         let mappings = UserDefaults.standard.dictionary(forKey: remoteDefaultsKey) as? [String: String] ?? [:]
         let itemsByID = Dictionary(uniqueKeysWithValues: load(includeWithdrawn: true, fileManager: fileManager).map { ($0.id, $0) })
-        for (remoteID, packageIDString) in mappings where !remoteIDs.contains(Int(remoteID) ?? -1) {
+        for (remoteID, packageIDString) in mappings {
+            // Negative IDs are reserved for the UUID-based mobile catalog. Keep
+            // positive IDs from the previous feed during this backend migration.
+            guard let numericRemoteID = Int(remoteID), numericRemoteID < 0,
+                  !remoteIDs.contains(numericRemoteID) else { continue }
             guard let packageID = UUID(uuidString: packageIDString) else {
                 removeRemoteMapping(for: remoteID)
                 continue

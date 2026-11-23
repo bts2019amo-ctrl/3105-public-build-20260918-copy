@@ -7,6 +7,13 @@ enum PatchPackageCodec {
     private static let magic = Data("3105PATCH\0".utf8)
     static let latestSchemaVersion = 3
     private static let minimumSchemaVersion = 1
+    // The VPS sample uses schema 9; new packages are still emitted as schema 3.
+    private static let additionalSupportedSchemaVersions: Set<Int> = [9]
+
+    private static func supportsSchemaVersion(_ version: Int) -> Bool {
+        (minimumSchemaVersion...latestSchemaVersion).contains(version)
+            || additionalSupportedSchemaVersions.contains(version)
+    }
 
     private struct Envelope: Codable {
         let schemaVersion: Int
@@ -207,7 +214,7 @@ enum PatchPackageCodec {
         }
         try validate(project)
         let schemaVersion = requestedSchemaVersion ?? oldEnvelope.schemaVersion
-        guard (minimumSchemaVersion...latestSchemaVersion).contains(schemaVersion) else {
+        guard supportsSchemaVersion(schemaVersion) else {
             throw PatchPackageError.unsupportedVersion
         }
         guard !project.isPrivate || oldEnvelope.isPasswordProtected else {
@@ -407,7 +414,7 @@ enum PatchPackageCodec {
         } catch {
             throw PatchPackageError.invalidPasswordOrCorruptedPackage
         }
-        guard (minimumSchemaVersion...latestSchemaVersion).contains(envelope.schemaVersion) else {
+        guard supportsSchemaVersion(envelope.schemaVersion) else {
             throw PatchPackageError.unsupportedVersion
         }
         guard envelope.keyFingerprint.count == 32,
@@ -417,9 +424,7 @@ enum PatchPackageCodec {
         }
         if envelope.isPasswordProtected {
             guard envelope.publicContentKey == nil,
-                  (minimumSchemaVersion...latestSchemaVersion).contains(
-                    envelope.keyAADVersion ?? envelope.schemaVersion
-                  ),
+                  supportsSchemaVersion(envelope.keyAADVersion ?? envelope.schemaVersion),
                   envelope.kdfSalt?.count == 16,
                   let iterations = envelope.kdfIterations,
                   iterations >= PatchPackageLimits.minimumKDFIterations,
