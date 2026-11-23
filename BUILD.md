@@ -10,8 +10,8 @@ A base legada em `RemotePatchConfiguration.baseURL` foi mantida separada para os
 
 Como o catálogo amostrado é acessível sem autenticação, os pacotes publicados nele podem ser baixados por qualquer cliente que conheça a rota. Não publique ali conteúdo que precise permanecer privado.
 
-## Estado da compilação
+## Resultado do build
 
-O projeto precisa de macOS e Xcode. A configuração de `ThreeOneOSFive.xcodeproj` foi restaurada a partir do commit `d5bd3ca`, cujo run do GitHub Actions foi bem-sucedido. Ela declara o target/scheme `3105` e produz `X.app`, que correspondem ao comando e caminho de artifact do workflow. O conjunto de arquivos-fonte em `ThreeOneOSFive/` não mudou desde aquele commit; a compilação da versão com a integração do catálogo será confirmada pelo runner macOS nesta branch.
+O projeto precisava do runner macOS porque este ambiente não tem Xcode. A configuração de `ThreeOneOSFive.xcodeproj` foi restaurada a partir do commit `d5bd3ca`, cujo run histórico havia compilado com o scheme `3105` e produto `X.app`. O código atualizado foi compilado com sucesso no GitHub Actions, workflow `Build iOS app - X`, run `45087201107`, a partir do commit `448c96d`. O runner macOS 26 passou a validação da integração, compilou o Release, empacotou e enviou o artifact `x-ios-ipa`.
 
-O workflow desativa a assinatura e empacota a pasta `X.app` em `X.ipa`. A IPA resultante é desassinada e não pode ser instalada diretamente em um iPhone sem assinatura e perfil de provisionamento compatíveis; esses elementos não estão configurados neste repositório.
+A IPA gerada contém `Payload/X.app`, identificador `com.apple.mobile.MobileHouseArrest`, versão `2.0` (build `22`) e mínimo iOS `16.0`. O arquivo ZIP passou pela verificação de integridade. O workflow desativa a assinatura e a IPA não contém a pasta `_CodeSignature`; portanto, ela não pode ser instalada diretamente em um iPhone sem assinatura e perfil de provisionamento compatíveis, que não estão configurados neste repositório.
