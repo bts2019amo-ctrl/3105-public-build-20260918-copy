@@ -459,6 +459,7 @@ final class IOSKeySession: ObservableObject {
 
 struct IOSKeyLoginView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(AppTheme.accentHueStorageKey) private var accentHue = AppTheme.defaultAccentHue
     @ObservedObject var session: IOSKeySession
     @State private var key = ""
     @State private var isKeyVisible = false
@@ -466,7 +467,7 @@ struct IOSKeyLoginView: View {
     @State private var clipboardHint: String?
     @State private var vpnAddress: String?
     @State private var vpnDetectionMessage = "O IP detectado é apenas informativo."
-    private let accent = Color(red: 0.70, green: 0.72, blue: 0.74)
+    private var accent: Color { Color(hue: accentHue, saturation: 0.94, brightness: 1.0) }
 
     private func checkClipboard() {
         guard let clip = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines),

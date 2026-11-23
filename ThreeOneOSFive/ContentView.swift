@@ -9,6 +9,8 @@ struct ContentView: View {
     @EnvironmentObject private var repositoryStore: PackageRepositoryStore
     @AppStorage(AppTheme.accentPaletteStorageKey)
     private var accentPalette = AppTheme.defaultAccentPalette
+    @AppStorage(AppTheme.accentHueStorageKey)
+    private var accentHue = AppTheme.defaultAccentHue
     @AppStorage(FeatureVisibility.developerModeStorageKey)
     private var developerModeEnabled = false
     @State private var tabNavigation: AppTabNavigationState
@@ -47,6 +49,7 @@ struct ContentView: View {
         ExternalSystemShellView()
         .id(accentPalette)
         .tint(AppTheme.accent)
+        .animation(.easeInOut(duration: 0.18), value: accentHue)
         .imageScale(.small)
         .onChange(of: patchDraftCoordinator.request?.id) { requestID in
             if requestID != nil { tabNavigation.select(AppSection.installed.rawValue) }

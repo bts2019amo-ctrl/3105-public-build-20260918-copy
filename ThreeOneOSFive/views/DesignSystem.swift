@@ -47,6 +47,9 @@ enum AppAccentPalette: String, CaseIterable, Identifiable {
 
 enum AppTheme {
     static let accentPaletteStorageKey = "theme.accent.palette"
+    static let accentHueStorageKey = "externalSystem.customHue"
+    static let particleMotionStorageKey = "motion.particles.enabled"
+    static let defaultAccentHue = 0.53
     static let glassOpacityStorageKey = "theme.glass.opacity"
     static let wallpaperBlurStorageKey = "theme.wallpaper.blur"
     static let animationSpeedStorageKey = "theme.animation.speed"
@@ -57,7 +60,10 @@ enum AppTheme {
     static let defaultAnimationSpeed = 1.0
     static let defaultSaturation = 1.0
 
-    static var accent: Color { Color(red: 0.70, green: 0.72, blue: 0.74) }
+    static var accent: Color {
+        let hue = UserDefaults.standard.object(forKey: accentHueStorageKey) as? Double ?? defaultAccentHue
+        return Color(hue: hue, saturation: 0.94, brightness: 1.0)
+    }
     static var glassOpacity: Double { UserDefaults.standard.object(forKey: glassOpacityStorageKey) as? Double ?? defaultGlassOpacity }
     static var wallpaperBlur: CGFloat { CGFloat(UserDefaults.standard.object(forKey: wallpaperBlurStorageKey) as? Double ?? defaultWallpaperBlur) }
     static var animationSpeed: Double { UserDefaults.standard.object(forKey: animationSpeedStorageKey) as? Double ?? defaultAnimationSpeed }
@@ -176,9 +182,10 @@ extension View {
 }
 
 /// A low-cost, decorative constellation field used behind app surfaces.
-    /// Motion is intentionally visible and automatically becomes static when Reduce Motion is enabled.
+    /// Motion stays neutral in color, slows when Reduce Motion is enabled, and can be paused in app settings.
 struct ParticleFieldBackground: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(AppTheme.particleMotionStorageKey) private var particlesEnabled = true
 
     var body: some View {
         GeometryReader { _ in
@@ -189,16 +196,17 @@ struct ParticleFieldBackground: View {
                     endPoint: .bottomTrailing
                 )
 
-                if reduceMotion {
-                    Canvas { context, size in
-                        Self.drawConstellation(in: &context, size: size, phase: 0)
-                    }
-                } else {
+                if particlesEnabled {
                     TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
                         Canvas { context, size in
-                            let phase = timeline.date.timeIntervalSinceReferenceDate * 1.35
+                            let speed = reduceMotion ? 0.52 : 1.35
+                            let phase = timeline.date.timeIntervalSinceReferenceDate * speed
                             Self.drawConstellation(in: &context, size: size, phase: phase)
                         }
+                    }
+                } else {
+                    Canvas { context, size in
+                        Self.drawConstellation(in: &context, size: size, phase: 0)
                     }
                 }
             }
@@ -215,8 +223,8 @@ struct ParticleFieldBackground: View {
             let seed = Double(index)
             let baseX = (seed * 0.61803398875).truncatingRemainder(dividingBy: 1)
             let baseY = (seed * 0.75487766625 + 0.17).truncatingRemainder(dividingBy: 1)
-            let driftX = sin(phase + seed * 1.73) * 0.075
-            let driftY = cos(phase * 0.83 + seed * 1.21) * 0.075
+            let driftX = sin(phase + seed * 1.73) * 0.12
+            let driftY = cos(phase * 0.83 + seed * 1.21) * 0.12
             return CGPoint(
                 x: CGFloat(min(1, max(0, baseX + driftX))) * size.width,
                 y: CGFloat(min(1, max(0, baseY + driftY))) * size.height

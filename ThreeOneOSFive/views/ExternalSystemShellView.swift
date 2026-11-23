@@ -39,7 +39,7 @@ struct ExternalSystemShellView: View {
     @AppStorage("externalSystem.streamProofEnabled") private var streamProofEnabled = false
     @AppStorage(DeltaColors.themeKey) private var themeRaw = DeltaTheme.graphite.rawValue
     @AppStorage(DeltaColors.darkModeKey) private var darkMode = false
-    @AppStorage(DeltaColors.customHueKey) private var customHue = 0.53
+    @AppStorage(DeltaColors.customHueKey) private var customHue = AppTheme.defaultAccentHue
     @State private var isScreenCaptured = UIScreen.screens.contains(where: { $0.isCaptured })
     @State private var screenshotShieldActive = false
 
@@ -67,6 +67,7 @@ struct ExternalSystemShellView: View {
                     selectedGame: $selectedGame,
                     selectedTab: $selectedTab,
                     languageCode: $languageCode,
+                    customHue: $customHue,
                     showErrorBanner: $showErrorBanner,
                     isVietnamese: isVietnamese,
                     appState: appState,
@@ -219,8 +220,8 @@ private struct DeltaColorWheel: View {
                     .overlay(Circle().stroke(.white, lineWidth: 3))
                     .shadow(color: Color(hue: selectedHue, saturation: 0.94, brightness: 1.0).opacity(0.9), radius: 9)
                     .offset(
-                        x: cos(selectedHue * 2 * .pi) * radius,
-                        y: sin(selectedHue * 2 * .pi) * radius
+                        x: CGFloat(cos(selectedHue * 2 * Double.pi)) * radius,
+                        y: CGFloat(sin(selectedHue * 2 * Double.pi)) * radius
                     )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -229,7 +230,7 @@ private struct DeltaColorWheel: View {
                 let dx = value.location.x - center.x
                 let dy = value.location.y - center.y
                 guard (dx * dx + dy * dy) > (side * 0.18) * (side * 0.18) else { return }
-                var hue = atan2(dy, dx) / (2 * .pi)
+                var hue = atan2(Double(dy), Double(dx)) / (2 * Double.pi)
                 if hue < 0 { hue += 1 }
                 selectedHue = hue
             })
@@ -325,24 +326,25 @@ struct DeltaPalette {
 
     static func make(_ theme: DeltaTheme, darkMode: Bool) -> DeltaPalette {
         let storedHue = UserDefaults.standard.object(forKey: DeltaColors.customHueKey) as? Double
-        let primary = storedHue.map { Color(hue: $0, saturation: 0.95, brightness: 1.0) } ?? theme.swatch
+        let hue = storedHue ?? AppTheme.defaultAccentHue
+        let primary = Color(hue: hue, saturation: 0.94, brightness: 1.0)
         if darkMode || theme == .dark {
             return DeltaPalette(
                 primary: primary,
-                dark: Color(hue: storedHue ?? 0.76, saturation: 0.92, brightness: 0.78),
+                dark: Color(hue: hue, saturation: 0.92, brightness: 0.78),
                 page: Color(red: 0.018, green: 0.021, blue: 0.026),
                 ink: Color.white.opacity(0.97),
-                muted: Color(hue: storedHue ?? 0.76, saturation: 0.18, brightness: 0.72),
+                muted: Color(hue: hue, saturation: 0.18, brightness: 0.72),
                 card: Color(red: 0.065, green: 0.074, blue: 0.086).opacity(0.98),
                 line: primary.opacity(0.32)
             )
         }
         return DeltaPalette(
             primary: primary,
-            dark: Color(hue: storedHue ?? 0.76, saturation: 0.90, brightness: 0.68),
+            dark: Color(hue: hue, saturation: 0.90, brightness: 0.68),
             page: Color(red: 0.018, green: 0.021, blue: 0.026),
-            ink: Color(hue: storedHue ?? 0.76, saturation: 0.58, brightness: 0.16),
-            muted: Color(hue: storedHue ?? 0.76, saturation: 0.22, brightness: 0.42),
+            ink: Color(hue: hue, saturation: 0.58, brightness: 0.16),
+            muted: Color(hue: hue, saturation: 0.22, brightness: 0.42),
             card: Color(red: 0.065, green: 0.074, blue: 0.086).opacity(0.98),
             line: primary.opacity(0.22)
         )
@@ -352,16 +354,13 @@ struct DeltaPalette {
 enum DeltaColors {
     static let themeKey = "externalSystem.theme"
     static let darkModeKey = "externalSystem.darkMode"
-    static let customHueKey = "externalSystem.customHue"
-    private static let palette = DeltaPalette(
-        primary: Color(red: 0.72, green: 0.74, blue: 0.76),
-        dark: Color(red: 0.24, green: 0.25, blue: 0.27),
-        page: Color(red: 0.018, green: 0.018, blue: 0.018),
-        ink: Color.white.opacity(0.96),
-        muted: Color(red: 0.62, green: 0.64, blue: 0.66),
-        card: Color(red: 0.065, green: 0.065, blue: 0.065).opacity(0.98),
-        line: Color.white.opacity(0.13)
-    )
+    static let customHueKey = AppTheme.accentHueStorageKey
+    private static var palette: DeltaPalette {
+        let theme = DeltaTheme(
+            rawValue: UserDefaults.standard.string(forKey: themeKey) ?? DeltaTheme.graphite.rawValue
+        ) ?? .graphite
+        return DeltaPalette.make(theme, darkMode: true)
+    }
     static var accent: Color { palette.primary }
     static var purpleDark: Color { palette.dark }
     static var lavender: Color { palette.page }
@@ -383,7 +382,15 @@ private struct DeltaGameSelectorView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            DeltaHeader(showMenuButton: false, showKeyButton: false, isVietnamese: false, onMenu: {}, onSwitchKey: {})
+            DeltaHeader(
+                showMenuButton: false,
+                showKeyButton: false,
+                showSettingsButton: false,
+                isVietnamese: false,
+                onMenu: {},
+                onSwitchKey: {},
+                onOpenSettings: {}
+            )
                 .padding(.top, 8)
                 .padding(.horizontal, 20)
 
@@ -508,6 +515,7 @@ private struct DeltaDashboardView: View {
     @Binding var selectedGame: DeltaGame
     @Binding var selectedTab: DeltaTab
     @Binding var languageCode: String
+    @Binding var customHue: Double
     @Binding var showErrorBanner: Bool
     let isVietnamese: Bool
     let appState: AppState
@@ -518,7 +526,17 @@ private struct DeltaDashboardView: View {
     var body: some View {
         ZStack(alignment: .top) {
             VStack(spacing: 0) {
-                DeltaHeader(showMenuButton: true, showKeyButton: selectedTab == .avatar || selectedTab == .hologram || selectedTab == .cache || selectedTab == .skin || selectedTab == .external, isVietnamese: false, onMenu: { showQuickMenu = true }, onSwitchKey: { keySession.logout() })
+                DeltaHeader(
+                    showMenuButton: true,
+                    showKeyButton: selectedTab != .dashboard,
+                    showSettingsButton: selectedTab != .settings,
+                    isVietnamese: false,
+                    onMenu: { showQuickMenu = true },
+                    onSwitchKey: { keySession.logout() },
+                    onOpenSettings: {
+                        withAnimation(.easeInOut(duration: 0.22)) { selectedTab = .settings }
+                    }
+                )
                     .padding(.horizontal, 16)
                     .padding(.top, 7)
 
@@ -532,7 +550,7 @@ private struct DeltaDashboardView: View {
                             case .hologram: DeltaRemoteFeatureTab(feature: .hologram, selectedGame: selectedGame)
                             case .external: DeltaRemoteFeatureTab(feature: .external, selectedGame: selectedGame)
                             case .skin: DeltaRemoteFeatureTab(feature: .skin, selectedGame: selectedGame)
-                            case .settings: DeltaReferenceSettingsTab(languageCode: $languageCode, isVietnamese: isVietnamese, appState: appState, keySession: keySession)
+                            case .settings: DeltaReferenceSettingsTab(languageCode: $languageCode, customHue: $customHue, isVietnamese: isVietnamese, appState: appState, keySession: keySession)
                             case .ghost: DeltaGhostModeTab()
                             case .custom(let identifier): DeltaRemoteCustomFeatureTab(identifier: identifier, selectedGame: selectedGame)
                             }
@@ -558,8 +576,12 @@ private struct DeltaDashboardView: View {
         .animation(.easeInOut(duration: 0.22), value: selectedTab)
         .animation(.easeInOut(duration: 0.22), value: showErrorBanner)
         .sheet(isPresented: $showQuickMenu) {
-            DeltaQuickMenu(selectedTab: $selectedTab, isVietnamese: isVietnamese)
-                .presentationDetents([.height(440)])
+            DeltaQuickMenu(
+                selectedTab: $selectedTab,
+                isVietnamese: isVietnamese,
+                onBackToGameSelection: onBackToGameSelection
+            )
+                .presentationDetents([.height(600), .large])
                 .presentationDragIndicator(.visible)
                 .preferredColorScheme(.dark)
         }
@@ -569,9 +591,11 @@ private struct DeltaDashboardView: View {
 private struct DeltaHeader: View {
     let showMenuButton: Bool
     let showKeyButton: Bool
+    let showSettingsButton: Bool
     let isVietnamese: Bool
     let onMenu: () -> Void
     let onSwitchKey: () -> Void
+    let onOpenSettings: () -> Void
     @State private var showSwitchKeyConfirmation = false
 
     var body: some View {
@@ -599,6 +623,19 @@ private struct DeltaHeader: View {
                 .minimumScaleFactor(0.72)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityAddTraits(.isHeader)
+
+            if showSettingsButton {
+                Button(action: onOpenSettings) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(DeltaColors.accent)
+                        .frame(width: 42, height: 42)
+                        .background(DeltaColors.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(DeltaColors.accent.opacity(0.28), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Configurações")
+            }
 
             if showKeyButton {
                 Button { showSwitchKeyConfirmation = true } label: {
@@ -636,30 +673,65 @@ private struct DeltaQuickMenu: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedTab: DeltaTab
     let isVietnamese: Bool
+    let onBackToGameSelection: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("NAVEGAÇÃO RÁPIDA")
-                    .font(.system(size: 10, weight: .heavy, design: .rounded))
-                    .tracking(1.5)
-                    .foregroundStyle(DeltaColors.accent)
-                Text("Escolha uma categoria")
-                    .font(.system(.title3, design: .rounded).weight(.bold))
-                    .foregroundStyle(DeltaColors.ink)
-            }
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("NAVEGAÇÃO RÁPIDA")
+                        .font(.system(size: 10, weight: .heavy, design: .rounded))
+                        .tracking(1.5)
+                        .foregroundStyle(DeltaColors.accent)
+                    Text("Escolha uma categoria")
+                        .font(.system(.title3, design: .rounded).weight(.bold))
+                        .foregroundStyle(DeltaColors.ink)
+                }
 
-            VStack(spacing: 9) {
-                menuItem(.avatar, subtitle: "Patches de avatar")
-                menuItem(.hologram, subtitle: "Patches de holograma")
-                menuItem(.cache, subtitle: "Patches de cache")
-                menuItem(.skin, subtitle: "Patches de skin")
-                menuItem(.external, subtitle: "Patches EXTERNAL")
-                menuItem(.ghost, subtitle: "Ativar Modo Fantasma")
+                VStack(spacing: 8) {
+                    menuItem(.avatar, subtitle: "Patches de avatar")
+                    menuItem(.hologram, subtitle: "Patches de holograma")
+                    menuItem(.cache, subtitle: "Patches de cache")
+                    menuItem(.skin, subtitle: "Patches de skin")
+                    menuItem(.external, subtitle: "Patches EXTERNAL")
+                    menuItem(.ghost, subtitle: "Ativar Modo Fantasma")
+                    menuItem(.settings, subtitle: "Cores e versões compatíveis")
+
+                    Button {
+                        dismiss()
+                        onBackToGameSelection()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "gamecontroller.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(DeltaColors.accent)
+                                .frame(width: 34, height: 34)
+                                .background(DeltaColors.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Trocar jogo")
+                                    .font(.subheadline.weight(.bold))
+                                    .foregroundStyle(DeltaColors.ink)
+                                Text("Voltar à seleção de jogo")
+                                    .font(.caption2)
+                                    .foregroundStyle(DeltaColors.muted)
+                            }
+                            Spacer()
+                            Image(systemName: "arrow.uturn.backward")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(DeltaColors.accent)
+                        }
+                        .padding(10)
+                        .background(DeltaColors.accent.opacity(0.09), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(DeltaColors.accent.opacity(0.32), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Abre novamente a tela para escolher Free Fire ou Free Fire MAX")
+                }
             }
+            .padding(20)
+            .frame(maxWidth: 620)
+            .frame(maxWidth: .infinity)
         }
-        .padding(22)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background {
             ZStack {
                 ParticleFieldBackground()
@@ -674,6 +746,11 @@ private struct DeltaQuickMenu: View {
             dismiss()
         } label: {
             HStack(spacing: 12) {
+                Image(systemName: tab.icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(DeltaColors.accent)
+                    .frame(width: 34, height: 34)
+                    .background(DeltaColors.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(tab.title).font(.subheadline.weight(.bold)).foregroundStyle(DeltaColors.ink)
                     Text(subtitle).font(.caption2).foregroundStyle(DeltaColors.muted)
@@ -1539,13 +1616,21 @@ private struct DeltaMiscTab: View {
 private struct DeltaReferenceSettingsTab: View {
     @EnvironmentObject private var remoteConfig: RemoteAppConfigStore
     @Binding var languageCode: String
+    @Binding var customHue: Double
     let isVietnamese: Bool
     let appState: AppState
     let keySession: IOSKeySession
+    @AppStorage(AppTheme.particleMotionStorageKey) private var particlesEnabled = true
     @AppStorage("externalSystem.streamProofEnabled") private var streamProof = false
     @State private var copied = false
+    private let colorSwatches: [Double] = [0.00, 0.08, 0.16, 0.32, 0.50, 0.63, 0.78, 0.90]
     private var deviceUID: String {
         UIDevice.current.identifierForVendor?.uuidString.uppercased() ?? "UNAVAILABLE"
+    }
+
+    private func isSelectedHue(_ hue: Double) -> Bool {
+        let difference = abs(customHue - hue)
+        return min(difference, 1 - difference) < 0.02
     }
 
     var body: some View {
@@ -1573,6 +1658,64 @@ private struct DeltaReferenceSettingsTab: View {
                 Text(deviceUID).font(.system(size: 8, design: .monospaced)).foregroundStyle(DeltaColors.ink).lineLimit(1).minimumScaleFactor(0.6)
             }
             DeltaCard {
+                DeltaSectionTitle("COR DO APLICATIVO", icon: "paintpalette.fill")
+                Text("Arraste o marcador pelo círculo ou toque em uma cor para mudar o tema na hora.")
+                    .font(.caption)
+                    .foregroundStyle(DeltaColors.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                DeltaColorWheel(selectedHue: $customHue)
+                    .frame(height: 212)
+                    .padding(.vertical, 3)
+                    .accessibilityLabel("Paleta circular de cores")
+                HStack(spacing: 9) {
+                    Circle()
+                        .fill(Color(hue: customHue, saturation: 0.94, brightness: 1.0))
+                        .frame(width: 24, height: 24)
+                        .overlay(Circle().stroke(.white.opacity(0.85), lineWidth: 1))
+                    Text("Cor selecionada")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DeltaColors.ink)
+                    Spacer()
+                    Text(String(format: "%03d°", Int(customHue * 360)))
+                        .font(.caption.monospaced().weight(.bold))
+                        .foregroundStyle(DeltaColors.muted)
+                }
+                HStack(spacing: 0) {
+                    ForEach(colorSwatches, id: \.self) { hue in
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.16)) { customHue = hue }
+                        } label: {
+                            Circle()
+                                .fill(Color(hue: hue, saturation: 0.94, brightness: 1.0))
+                                .frame(width: 23, height: 23)
+                                .overlay(Circle().stroke(isSelectedHue(hue) ? Color.white : Color.clear, lineWidth: 2))
+                                .frame(maxWidth: .infinity, minHeight: 36)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Selecionar cor de matiz \(Int(hue * 360)) graus")
+                    }
+                }
+                Text("A cor do tema muda em todas as telas, inclusive no login. As partículas continuam com a cor neutra original.")
+                    .font(.caption2)
+                    .foregroundStyle(DeltaColors.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            DeltaCard {
+                DeltaSectionTitle("EFEITOS VISUAIS", icon: "sparkles")
+                Toggle(isOn: $particlesEnabled) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Partículas em movimento")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(DeltaColors.ink)
+                        Text("Reduzir Movimento no iOS desacelera a animação.")
+                            .font(.caption2)
+                            .foregroundStyle(DeltaColors.muted)
+                    }
+                }
+                .tint(DeltaColors.accent)
+            }
+            DeltaCard {
                 DeltaSectionTitle(isVietnamese ? "TÆ¯Æ NG THÃCH Há» ÄIá»U HÃNH" : "SYSTEM COMPATIBILITY", icon: "apple.logo")
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
@@ -1582,6 +1725,24 @@ private struct DeltaReferenceSettingsTab: View {
                     Spacer()
                     DeltaStatusBadge(text: appState.isSupported ? (isVietnamese ? "Há» TRá»¢" : "SUPPORTED") : "UNSUPPORTED")
                 }
+                Rectangle().fill(DeltaColors.line.opacity(0.6)).frame(height: 0.7)
+                DeltaSectionTitle("VERSÕES DE iOS VERIFICADAS", icon: "checkmark.seal.fill")
+                DeltaInfoRow("Mínimo para instalar", value: "iOS 16.0")
+                DeltaInfoRow("iOS 17", value: ExploitSupportPolicy.verifiedIOS17Range)
+                DeltaInfoRow("iOS 18", value: ExploitSupportPolicy.verifiedIOS18Range)
+                DeltaInfoRow("iOS 26", value: ExploitSupportPolicy.verifiedIOS26Range)
+                ForEach(ExploitSupportPolicy.verifiedIOS27Builds.indices, id: \.self) { index in
+                    let version = ExploitSupportPolicy.verifiedIOS27Builds[index]
+                    let publicBeta = version.publicBeta.map { " · Beta pública \($0)" } ?? ""
+                    DeltaInfoRow(
+                        "iOS 27 Beta \(version.beta)\(publicBeta)",
+                        value: version.build
+                    )
+                }
+                Text("A lista mostra as faixas e builds registrados como verificados no app; nem todo build de pré-lançamento está coberto.")
+                    .font(.system(size: 9))
+                    .foregroundStyle(DeltaColors.muted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             DeltaCard {
                 DeltaSectionTitle(isVietnamese ? "NGÃN NGá»®" : "LANGUAGE", icon: "globe")
